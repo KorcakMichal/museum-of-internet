@@ -102,13 +102,12 @@ body {
 
 .world-frame {
   position: relative;
-  overflow: auto;
-  min-height: 720px;
+  overflow: hidden;
+  height: 560px;
+  max-height: calc(100vh - 260px);
   border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 28px 60px rgba(39, 45, 50, 0.15);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(31, 36, 48, 0.3) transparent;
 }
 
 .world {
@@ -121,19 +120,6 @@ body {
     linear-gradient(var(--grass) 0%, #96d97c 60%, #7cc165 100%);
 }
 
-.world-frame::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.world-frame::-webkit-scrollbar-thumb {
-  background: rgba(31, 36, 48, 0.28);
-  border-radius: 999px;
-}
-
-.world-frame::-webkit-scrollbar-track {
-  background: transparent;
-}
 
 .skyline {
   position: absolute;
@@ -410,6 +396,7 @@ body {
   left: 50%;
   bottom: 28px;
   transform: translateX(-50%);
+  z-index: 10;
   padding: 10px 14px;
   border-radius: 999px;
   background: rgba(18, 22, 31, 0.84);
@@ -670,10 +657,6 @@ body {
 @media (max-width: 760px) {
   .app-shell {
     padding: 14px;
-  }
-
-  .world-frame {
-    min-height: 620px;
   }
 
   .panel-actions {

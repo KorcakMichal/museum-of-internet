@@ -6,7 +6,6 @@ const panelDescription = document.getElementById("panelDescription");
 const panelFacts = document.getElementById("panelFacts");
 const enterRoomButton = document.getElementById("enterRoomButton");
 const visitLink = document.getElementById("visitLink");
-const focusButton = document.getElementById("focusButton");
 const webRoom = document.getElementById("webRoom");
 const webRoomTitle = document.getElementById("webRoomTitle");
 const webRoomMode = document.getElementById("webRoomMode");
@@ -650,15 +649,19 @@ async function handleWebRoomSearch(query) {
   }
 }
 
-function centerOnPlayer() {
+function updateCamera() {
   const frame = world.parentElement;
-  const targetLeft = player.x - frame.clientWidth / 2 + player.width / 2;
-  const targetTop = player.y - frame.clientHeight / 2 + player.height / 2;
-  frame.scrollTo({
-    left: clamp(targetLeft, 0, world.scrollWidth - frame.clientWidth),
-    top: clamp(targetTop, 0, world.scrollHeight - frame.clientHeight),
-    behavior: "smooth",
-  });
+  const vpW = frame.clientWidth;
+  const vpH = frame.clientHeight;
+  const rawCamX = vpW / 2 - player.x - player.width / 2;
+  const rawCamY = vpH / 2 - player.y - player.height / 2;
+  const camX = worldBounds.width <= vpW
+    ? (vpW - worldBounds.width) / 2
+    : clamp(rawCamX, vpW - worldBounds.width, 0);
+  const camY = worldBounds.height <= vpH
+    ? (vpH - worldBounds.height) / 2
+    : clamp(rawCamY, vpH - worldBounds.height, 0);
+  world.style.transform = `translate(${camX}px, ${camY}px)`;
 }
 
 function gameLoop(timestamp) {
@@ -670,6 +673,7 @@ function gameLoop(timestamp) {
   }
   updatePlayerRender();
   updateNearbyHouse();
+  updateCamera();
 
   requestAnimationFrame(gameLoop);
 }
@@ -706,8 +710,6 @@ enterRoomButton.addEventListener("click", () => {
     openWebRoom(selectedHouse);
   }
 });
-
-focusButton.addEventListener("click", centerOnPlayer);
 
 closeWebRoomButton.addEventListener("click", closeWebRoom);
 
