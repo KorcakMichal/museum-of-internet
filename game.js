@@ -134,7 +134,19 @@ const houses = [
   },
 ];
 
-const defaultPanelFacts = houses.map((house) => house.townFact);
+const generatedLotSlots = [
+  { x: 390, y: 96, width: 210, height: 180 },
+  { x: 680, y: 96, width: 210, height: 180 },
+  { x: 390, y: 448, width: 210, height: 180 },
+  { x: 680, y: 448, width: 210, height: 180 },
+];
+
+const generatedHousePalettes = [
+  { roof: "#2b4f7f", body: "#deecff" },
+  { roof: "#7d4322", body: "#ffe4cf" },
+  { roof: "#3f6e3e", body: "#d9f4d8" },
+  { roof: "#6b3c76", body: "#f3dffd" },
+];
 
 const obstacles = [
   { x: 0, y: 0, width: worldBounds.width, height: 70 },
@@ -147,6 +159,7 @@ let selectedHouse = null;
 let lastTimestamp = 0;
 let activeWebRoomHouse = null;
 let isMapOpen = false;
+let generatedHouseCount = 0;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -159,6 +172,157 @@ function intersects(a, b) {
     a.y < b.y + b.height &&
     a.y + a.height > b.y
   );
+}
+
+function getDefaultPanelFacts() {
+  return houses.map((house) => house.townFact);
+}
+
+function getSiteHost(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function normalizeWebsiteInput(input) {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const candidate = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const url = new URL(candidate);
+    if (!url.hostname || !url.hostname.includes(".")) {
+      return null;
+    }
+
+    return {
+      url: url.toString(),
+      host: url.hostname.replace(/^www\./, "").toLowerCase(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function toTitleCase(value) {
+  if (!value) {
+    return "Website";
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function getWebsiteDisplayName(host) {
+  const parts = host.split(".").filter(Boolean);
+  if (parts.length === 0) {
+    return "Website";
+  }
+
+  const candidate = parts.length > 1 ? parts[parts.length - 2] : parts[0];
+  return toTitleCase(candidate.replace(/[^a-zA-Z0-9-]/g, ""));
+}
+
+function getNextGeneratedLot() {
+  return generatedLotSlots.find((slot) => !houses.some((house) => house.lot.x === slot.x && house.lot.y === slot.y));
+}
+
+function renderHouseInWorld(house, palette) {
+  if (world.querySelector(`[data-house-id="${house.id}"]`)) {
+    return;
+  }
+
+  const lot = document.createElement("div");
+  lot.className = "lot";
+  lot.style.left = `${house.lot.x}px`;
+  lot.style.top = `${house.lot.y}px`;
+
+  const houseElement = document.createElement("div");
+  houseElement.className = "house house-browser";
+  houseElement.dataset.houseId = house.id;
+  houseElement.style.setProperty("--house-roof", palette.roof);
+  houseElement.style.setProperty("--house-body", palette.body);
+
+  const bodyName = house.name.replace(" House", "");
+  houseElement.innerHTML = `
+    <div class="roof"></div>
+    <div class="body">
+      <div class="sign">${bodyName}</div>
+      <div class="door"></div>
+      <div class="window left"></div>
+      <div class="window right"></div>
+    </div>
+  `;
+
+  lot.appendChild(houseElement);
+
+  const firstTree = world.querySelector(".trees");
+  if (firstTree) {
+    world.insertBefore(lot, firstTree);
+  } else {
+    world.appendChild(lot);
+  }
+}
+
+function createWebsiteHouse(website) {
+  const existing = houses.find((house) => getSiteHost(house.url) === website.host);
+  if (existing) {
+    return { status: "exists", house: existing };
+  }
+
+  const lot = getNextGeneratedLot();
+  if (!lot) {
+    return { status: "full" };
+  }
+
+  generatedHouseCount += 1;
+  const palette = generatedHousePalettes[(generatedHouseCount - 1) % generatedHousePalettes.length];
+  const displayName = getWebsiteDisplayName(website.host);
+  const id = `site-${displayName.toLowerCase()}-${generatedHouseCount}`;
+
+  const house = {
+    id,
+    name: `${displayName} House`,
+    url: website.url,
+    description: `A custom website house generated from ${website.host}.`,
+    facts: [
+      `Generated from: ${website.host}`,
+      "Spawned automatically from the Browser House.",
+      "Use this as a quick shortcut in your town.",
+    ],
+    roomMode: "Website Shortcut Room",
+    roomAddress: `museum://website-house/${website.host}`,
+    roomIntro: "This custom house was generated from your browser search.",
+    searchPlaceholder: "Type a URL or a search query",
+    townFact: `${displayName} House: custom website shortcut.`,
+    chips: [website.host, `about ${displayName}`, `${displayName} login`],
+    roomTip: "You can keep generating houses from Browser House by searching more websites.",
+    lot,
+    collision: {
+      x: lot.x + 36,
+      y: lot.y + 56,
+      width: 138,
+      height: 118,
+    },
+    interactZone: {
+      x: lot.x + 22,
+      y: lot.y + 114,
+      width: 166,
+      height: 84,
+    },
+  };
+
+  houses.push(house);
+  obstacles.push(house.collision);
+  renderHouseInWorld(house, palette);
+  renderMapHouseMarkers();
+  renderHouseBrowser();
+
+  return { status: "created", house };
 }
 
 function canOccupy(x, y) {
@@ -458,7 +622,7 @@ function setPanelContent(house) {
     panelTitle.textContent = "Town Square";
     panelDescription.textContent =
       "Walk up to a house and press E. Each building represents a real place on the internet.";
-    renderFacts(defaultPanelFacts);
+    renderFacts(getDefaultPanelFacts());
     enterRoomButton.classList.add("disabled");
     visitLink.classList.add("disabled");
     visitLink.href = "#";
@@ -760,14 +924,41 @@ function runBrowserSearch(query) {
   clearElement(webRoomResults);
 
   if (looksLikeUrl(query)) {
-    const normalized = query.startsWith("http://") || query.startsWith("https://") ? query : `https://${query}`;
-    setStatus(`Prepared direct link for ${normalized}.`);
+    const website = normalizeWebsiteInput(query);
+    if (!website) {
+      setStatus("That does not look like a valid website address.");
+      setDefaultWebRoomContent(activeWebRoomHouse);
+      return;
+    }
+
+    const houseResult = createWebsiteHouse(website);
+    if (houseResult.status === "created") {
+      setPanelContent(houseResult.house);
+      setStatus(`Generated ${houseResult.house.name} from ${website.host}.`);
+    } else if (houseResult.status === "exists") {
+      setPanelContent(houseResult.house);
+      setStatus(`${houseResult.house.name} already exists in town.`);
+    } else {
+      setStatus("All custom lot slots are used. Open one of the existing houses instead.");
+    }
+
     webRoomResults.appendChild(
       makeCard({
         title: "Direct URL detected",
-        description: "Open this address directly from the navigator room.",
+        description: "Open this address directly from the navigator room and use the generated house in town.",
         hero: true,
-        actions: [makeLink("Open URL", normalized, "button-primary")],
+        actions: [
+          makeLink("Open URL", website.url, "button-primary"),
+          houseResult.house
+            ? makeButton("Focus House", () => {
+              setPanelContent(houseResult.house);
+            })
+            : makeButton("Back To Browser House", () => {
+              if (activeWebRoomHouse) {
+                setPanelContent(activeWebRoomHouse);
+              }
+            }),
+        ],
       })
     );
     return;
@@ -843,7 +1034,10 @@ async function handleWebRoomSearch(query) {
     const selectedHandler = handlers[activeWebRoomHouse.id];
     if (selectedHandler) {
       await selectedHandler();
+      return;
     }
+
+    await runBrowserSearch(trimmedQuery);
   } catch (error) {
     setStatus("That interaction failed. The external site links are still available.");
     setDefaultWebRoomContent(activeWebRoomHouse);
