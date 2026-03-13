@@ -317,8 +317,8 @@ body {
 
 .player {
   position: absolute;
-  width: 34px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   left: 120px;
   top: 460px;
   z-index: 20;
@@ -328,44 +328,52 @@ body {
 .player-shadow {
   position: absolute;
   bottom: 0;
-  left: 4px;
-  width: 26px;
-  height: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 42px;
+  height: 12px;
   background: rgba(25, 28, 35, 0.22);
   border-radius: 50%;
 }
 
 .player-sprite {
   position: absolute;
-  inset: 0 0 4px;
+  inset: 0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-image: url("/assets/player/bezdak_0.png");
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.player.walking .player-sprite {
+  animation: player-walk 2.4s steps(1) infinite;
+}
+
+@keyframes player-walk {
+  0% { background-image: url("/assets/player/bezdak_0.png"); }
+  12.5% { background-image: url("/assets/player/bezdak_1.png"); }
+  25% { background-image: url("/assets/player/bezdak_2.png"); }
+  37.5% { background-image: url("/assets/player/bezdak_3.png"); }
+  50% { background-image: url("/assets/player/bezdak_4.png"); }
+  62.5% { background-image: url("/assets/player/bezdak_5.png"); }
+  75% { background-image: url("/assets/player/bezdak_6.png"); }
+  87.5% { background-image: url("/assets/player/bezdak_7.png"); }
+}
+
+.player-sprite .head,
+.player-sprite .body {
+  display: none;
 }
 
 .player .head,
 .player .body {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.player .head {
-  top: 2px;
-  width: 16px;
-  height: 16px;
-  background: #ffd4ae;
-  border-radius: 50%;
-  box-shadow: 0 -2px 0 4px var(--player);
-}
-
-.player .body {
-  top: 18px;
-  width: 22px;
-  height: 20px;
-  background: linear-gradient(180deg, var(--player-accent), #f1a31f 26%, var(--player) 26%);
-  border-radius: 10px 10px 8px 8px;
+  display: none;
 }
 
 .player.walking .player-sprite {
-  animation: bob 220ms infinite alternate;
+  animation: player-walk 0.8s steps(1) infinite;
 }
 
 @keyframes bob {
@@ -669,14 +677,14 @@ body {
 
 .room-avatar {
   position: absolute;
-  width: 34px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   left: 24px;
   top: 150px;
 }
 
 .room-avatar.walking {
-  animation: room-bob 220ms infinite alternate;
+  animation: none;
 }
 
 @keyframes room-bob {
@@ -703,48 +711,37 @@ body {
 .room-avatar .player-sprite,
 .room-npc .player-sprite {
   position: absolute;
-  inset: 0 0 4px;
+  inset: 0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-image: url("/assets/player/bezdak_0.png");
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.room-avatar.walking .player-sprite {
+  animation: player-walk 2.4s steps(1) infinite;
 }
 
 .room-avatar .head,
 .room-npc .head,
 .room-avatar .body,
 .room-npc .body {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.room-avatar .head,
-.room-npc .head {
-  top: 2px;
-  width: 16px;
-  height: 16px;
-  background: #ffd4ae;
-  border-radius: 50%;
-  box-shadow: 0 -2px 0 4px var(--player);
-}
-
-.room-avatar .body,
-.room-npc .body {
-  top: 18px;
-  width: 22px;
-  height: 20px;
-  background: linear-gradient(180deg, var(--player-accent), #f1a31f 26%, var(--player) 26%);
-  border-radius: 10px 10px 8px 8px;
+  display: none;
 }
 
 .room-npc {
   position: absolute;
   left: 118px;
   top: 136px;
-  width: 34px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   z-index: 3;
 }
 
-.room-npc .body {
-  background: linear-gradient(180deg, #9be2f2, #49b3cd 26%, #1f6080 26%);
+.room-npc .player-sprite {
+  transform: scaleX(-1);
 }
 
 .room-object {

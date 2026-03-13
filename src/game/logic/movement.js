@@ -49,7 +49,12 @@ export function movePlayer(state, refs, delta) {
 
   const moving = dx !== 0 || dy !== 0;
   refs.playerElement.classList.toggle('walking', moving);
-
+  // Flip sprite based on movement direction
+  if (dx < 0) {
+    refs.playerElement.querySelector('.player-sprite').style.transform = 'scaleX(-1)';
+  } else if (dx > 0) {
+    refs.playerElement.querySelector('.player-sprite').style.transform = 'scaleX(1)';
+  }
   if (!moving) {
     return;
   }

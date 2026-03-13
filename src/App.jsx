@@ -22,10 +22,7 @@ export default function App() {
 
             <div id="player" className="player" aria-label="Player character">
               <div className="player-shadow"></div>
-              <div className="player-sprite">
-                <span className="head"></span>
-                <span className="body"></span>
-              </div>
+              <div className="player-sprite"></div>
             </div>
           </div>
           <div id="interactionPrompt" className="interaction-prompt hidden" aria-live="polite"></div>
@@ -114,18 +111,12 @@ export default function App() {
             <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
               <div id="roomAvatar" className="room-avatar" aria-hidden="true">
                 <div className="player-shadow"></div>
-                <div className="player-sprite">
-                  <span className="head"></span>
-                  <span className="body"></span>
-                </div>
+                <div className="player-sprite"></div>
               </div>
 
               <div id="roomNpc" className="room-npc room-object" aria-hidden="true">
                 <div className="player-shadow"></div>
-                <div className="player-sprite">
-                  <span className="head"></span>
-                  <span className="body"></span>
-                </div>
+                <div className="player-sprite"></div>
               </div>
 
               <div id="roomNewspapers" className="room-newspapers room-object" aria-hidden="true">
