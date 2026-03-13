@@ -207,22 +207,13 @@ function normalizeWebsiteInput(input) {
   }
 }
 
-function toTitleCase(value) {
-  if (!value) {
-    return "Website";
-  }
-
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
 function getWebsiteDisplayName(host) {
-  const parts = host.split(".").filter(Boolean);
-  if (parts.length === 0) {
+  const normalizedHost = (host || "").trim().toLowerCase().replace(/^www\./, "");
+  if (!normalizedHost) {
     return "Website";
   }
 
-  const candidate = parts.length > 1 ? parts[parts.length - 2] : parts[0];
-  return toTitleCase(candidate.replace(/[^a-zA-Z0-9-]/g, ""));
+  return normalizedHost;
 }
 
 function getNextGeneratedLot() {
@@ -280,7 +271,8 @@ function createWebsiteHouse(website) {
   generatedHouseCount += 1;
   const palette = generatedHousePalettes[(generatedHouseCount - 1) % generatedHousePalettes.length];
   const displayName = getWebsiteDisplayName(website.host);
-  const id = `site-${displayName.toLowerCase()}-${generatedHouseCount}`;
+  const idSafeName = displayName.replace(/[^a-z0-9-]/g, "-");
+  const id = `site-${idSafeName}-${generatedHouseCount}`;
 
   const house = {
     id,
@@ -321,6 +313,27 @@ function createWebsiteHouse(website) {
   renderHouseBrowser();
 
   return { status: "created", house };
+}
+
+function createHouseFromWebsiteUrl(url) {
+  const website = normalizeWebsiteInput(url);
+  if (!website) {
+    setStatus("Could not parse that website address.");
+    return null;
+  }
+
+  const houseResult = createWebsiteHouse(website);
+  if (houseResult.status === "created") {
+    setPanelContent(houseResult.house);
+    setStatus(`Generated ${houseResult.house.name} from ${website.host}.`);
+  } else if (houseResult.status === "exists") {
+    setPanelContent(houseResult.house);
+    setStatus(`${houseResult.house.name} already exists in town.`);
+  } else {
+    setStatus("All custom lot slots are used. Open one of the existing houses instead.");
+  }
+
+  return { website, houseResult };
 }
 
 function canOccupy(x, y) {
@@ -817,6 +830,103 @@ function looksLikeUrl(query) {
   return query.includes(".") || query.startsWith("http://") || query.startsWith("https://");
 }
 
+function extractDuckDuckGoResults(data, limit = 6) {
+  const collected = [];
+
+  function collectFromTopics(topics) {
+    if (!Array.isArray(topics)) {
+      return;
+    }
+
+    topics.forEach((topic) => {
+      if (collected.length >= limit) {
+        return;
+      }
+
+      if (topic && Array.isArray(topic.Topics)) {
+        collectFromTopics(topic.Topics);
+        return;
+      }
+
+      if (topic && topic.FirstURL) {
+        collected.push(topic);
+      }
+    });
+  }
+
+  if (data?.AbstractURL) {
+    collected.push({
+      Text: data.AbstractText || data.Heading || "DuckDuckGo instant answer",
+      FirstURL: data.AbstractURL,
+    });
+  }
+
+  collectFromTopics(data?.RelatedTopics);
+
+  return collected.slice(0, limit);
+}
+
+function buildWebsiteCandidates(query, apiResults, limit = 10) {
+  const preferredHosts = {
+    github: "github.com",
+    google: "google.com",
+    wikipedia: "wikipedia.org",
+    youtube: "youtube.com",
+    reddit: "reddit.com",
+    stackoverflow: "stackoverflow.com",
+    archive: "archive.org",
+    duckduckgo: "duckduckgo.com",
+  };
+
+  const candidateMap = new Map();
+  const rawInput = query.trim().toLowerCase();
+  const compactInput = rawInput.replace(/\s+/g, "");
+  const slug = compactInput.replace(/[^a-z0-9.-]/g, "");
+
+  function addCandidate(rawUrl, description, priority) {
+    const normalized = normalizeWebsiteInput(rawUrl);
+    if (!normalized) {
+      return;
+    }
+
+    const existing = candidateMap.get(normalized.host);
+    if (!existing || priority < existing.priority) {
+      candidateMap.set(normalized.host, {
+        host: normalized.host,
+        url: normalized.url,
+        description: description || `Suggested website: ${normalized.url}`,
+        priority,
+      });
+      return;
+    }
+
+    if (!existing.description && description) {
+      existing.description = description;
+    }
+  }
+
+  if (preferredHosts[compactInput]) {
+    addCandidate(preferredHosts[compactInput], "Likely official website match for your query.", 0);
+  }
+
+  if (slug && !slug.includes("/")) {
+    addCandidate(`${slug}.com`, `Common domain guess for "${query}".`, 1);
+    addCandidate(`${slug}.org`, `Possible organization domain for "${query}".`, 2);
+    addCandidate(`${slug}.net`, `Possible network domain for "${query}".`, 2);
+  }
+
+  apiResults.forEach((result) => {
+    if (result?.FirstURL) {
+      addCandidate(result.FirstURL, result.Text || "Result from free search API.", 3);
+    }
+  });
+
+  return Array.from(candidateMap.values())
+    .sort((a, b) => a.priority - b.priority || a.host.localeCompare(b.host))
+    .slice(0, limit)
+    .map(({ host, url, description }) => ({ host, url, description }));
+}
+
 async function runArchiveSearch(query) {
   clearElement(webRoomResults);
 
@@ -916,27 +1026,18 @@ async function runArchiveSearch(query) {
   setStatus("Wayback snapshot loaded.");
 }
 
-function runBrowserSearch(query) {
+async function runBrowserSearch(query) {
   clearElement(webRoomResults);
 
   if (looksLikeUrl(query)) {
-    const website = normalizeWebsiteInput(query);
-    if (!website) {
+    const creationResult = createHouseFromWebsiteUrl(query);
+    if (!creationResult) {
       setStatus("That does not look like a valid website address.");
       setDefaultWebRoomContent(activeWebRoomHouse);
       return;
     }
 
-    const houseResult = createWebsiteHouse(website);
-    if (houseResult.status === "created") {
-      setPanelContent(houseResult.house);
-      setStatus(`Generated ${houseResult.house.name} from ${website.host}.`);
-    } else if (houseResult.status === "exists") {
-      setPanelContent(houseResult.house);
-      setStatus(`${houseResult.house.name} already exists in town.`);
-    } else {
-      setStatus("All custom lot slots are used. Open one of the existing houses instead.");
-    }
+    const { website, houseResult } = creationResult;
 
     webRoomResults.appendChild(
       makeCard({
@@ -961,50 +1062,69 @@ function runBrowserSearch(query) {
   }
 
   const encoded = encodeURIComponent(query);
-  setStatus(`Prepared browser routes for \"${query}\".`);
+  setStatus(`Searching websites for \"${query}\" with a free API...`);
+
+  let apiResults = [];
+  try {
+    const apiData = await fetchJson(
+      `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&no_redirect=1&skip_disambig=1`
+    );
+    apiResults = extractDuckDuckGoResults(apiData);
+  } catch {
+    apiResults = [];
+  }
+
+  const websiteCandidates = buildWebsiteCandidates(query, apiResults);
+
+  if (websiteCandidates.length === 0) {
+    webRoomResults.appendChild(
+      makeCard({
+        title: `No direct website matches for \"${query}\"`,
+        description: "Try a more specific query or use a search route below.",
+        hero: true,
+      })
+    );
+
+    setStatus("No direct website matches found.");
+
+    webRoomResults.appendChild(
+      makeCard({
+        title: "Search Routes",
+        description: "Use these routes to continue searching on the web.",
+        actions: [
+          makeLink("Open DuckDuckGo", `https://duckduckgo.com/?q=${encoded}`, "button-primary"),
+          makeLink("Open Google", `https://www.google.com/search?q=${encoded}`),
+          makeLink("Open Wikipedia", `https://en.wikipedia.org/w/index.php?search=${encoded}`),
+        ],
+      })
+    );
+    return;
+  }
 
   webRoomResults.appendChild(
     makeCard({
-      title: `Navigator routes for \"${query}\"`,
-      description: "Pick the route you want to open in a new tab.",
+      title: `Possible webpages for \"${query}\"`,
+      description: "Choose a website result and optionally create a house from it.",
       hero: true,
     })
   );
 
-  [
-    {
-      title: "DuckDuckGo",
-      description: "Privacy-focused web search.",
-      href: `https://duckduckgo.com/?q=${encoded}`,
-      label: "Open DuckDuckGo",
-    },
-    {
-      title: "Google Web Search",
-      description: "Standard Google results for this query.",
-      href: `https://www.google.com/search?q=${encoded}`,
-      label: "Open Google",
-    },
-    {
-      title: "Wikipedia Search",
-      description: "Jump straight into Wikipedia search.",
-      href: `https://en.wikipedia.org/w/index.php?search=${encoded}`,
-      label: "Open Wikipedia",
-    },
-    {
-      title: "YouTube Search",
-      description: "Search videos for this topic.",
-      href: `https://www.youtube.com/results?search_query=${encoded}`,
-      label: "Open YouTube",
-    },
-  ].forEach((item) => {
+  websiteCandidates.forEach((candidate) => {
     webRoomResults.appendChild(
       makeCard({
-        title: item.title,
-        description: item.description,
-        actions: [makeLink(item.label, item.href, "button-primary")],
+        title: candidate.host,
+        description: candidate.description,
+        actions: [
+          makeLink("Open Website", candidate.url, "button-primary"),
+          makeButton("Create House", () => {
+            createHouseFromWebsiteUrl(candidate.url);
+          }),
+        ],
       })
     );
   });
+
+  setStatus(`Found ${websiteCandidates.length} possible website${websiteCandidates.length === 1 ? "" : "s"}.`);
 }
 
 async function handleWebRoomSearch(query) {
