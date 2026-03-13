@@ -6,6 +6,7 @@ const panelDescription = document.getElementById("panelDescription");
 const panelFacts = document.getElementById("panelFacts");
 const enterRoomButton = document.getElementById("enterRoomButton");
 const visitLink = document.getElementById("visitLink");
+const toggleMapButton = document.getElementById("toggleMapButton");
 const webRoom = document.getElementById("webRoom");
 const webRoomTitle = document.getElementById("webRoomTitle");
 const webRoomMode = document.getElementById("webRoomMode");
@@ -17,6 +18,11 @@ const webRoomExternalLink = document.getElementById("webRoomExternalLink");
 const webRoomStatus = document.getElementById("webRoomStatus");
 const webRoomResults = document.getElementById("webRoomResults");
 const closeWebRoomButton = document.getElementById("closeWebRoomButton");
+const mapOverlay = document.getElementById("mapOverlay");
+const closeMapButton = document.getElementById("closeMapButton");
+const miniMap = document.getElementById("miniMap");
+const mapHouseMarkers = document.getElementById("mapHouseMarkers");
+const mapPlayerMarker = document.getElementById("mapPlayerMarker");
 
 const worldBounds = {
   width: 1280,
@@ -106,6 +112,7 @@ let nearbyHouse = null;
 let selectedHouse = null;
 let lastTimestamp = 0;
 let activeWebRoomHouse = null;
+let isMapOpen = false;
 
 const chipQueries = {
   wikipedia: ["internet", "museum", "world wide web", "Alan Turing"],
@@ -176,6 +183,61 @@ function movePlayer(delta) {
 function updatePlayerRender() {
   playerElement.style.left = `${player.x}px`;
   playerElement.style.top = `${player.y}px`;
+  updateMapPlayerMarker();
+}
+
+function toMapPercent(x, y) {
+  return {
+    x: (x / worldBounds.width) * 100,
+    y: (y / worldBounds.height) * 100,
+  };
+}
+
+function updateMapPlayerMarker() {
+  const centerX = player.x + player.width / 2;
+  const centerY = player.y + player.height / 2;
+  const point = toMapPercent(centerX, centerY);
+  mapPlayerMarker.style.left = `${point.x}%`;
+  mapPlayerMarker.style.top = `${point.y}%`;
+}
+
+function renderMapHouseMarkers() {
+  mapHouseMarkers.innerHTML = "";
+
+  houses.forEach((house) => {
+    const centerX = house.lot.x + house.lot.width / 2;
+    const centerY = house.lot.y + house.lot.height / 2;
+    const point = toMapPercent(centerX, centerY);
+
+    const marker = document.createElement("button");
+    marker.type = "button";
+    marker.className = "map-house-marker";
+    marker.style.left = `${point.x}%`;
+    marker.style.top = `${point.y}%`;
+    marker.textContent = house.name.replace(" House", "");
+    marker.title = house.name;
+    marker.addEventListener("click", () => {
+      setPanelContent(house);
+      setMapOpen(false);
+    });
+
+    mapHouseMarkers.appendChild(marker);
+  });
+}
+
+function setMapOpen(open) {
+  isMapOpen = open;
+  mapOverlay.classList.toggle("hidden", !open);
+  mapOverlay.setAttribute("aria-hidden", open ? "false" : "true");
+  toggleMapButton.textContent = open ? "Hide Map" : "Show Map";
+
+  if (open) {
+    updateMapPlayerMarker();
+  }
+}
+
+function toggleMap() {
+  setMapOpen(!isMapOpen);
 }
 
 function updateNearbyHouse() {
@@ -343,6 +405,7 @@ function openWebRoom(house) {
     return;
   }
 
+  setMapOpen(false);
   activeWebRoomHouse = house;
   keys.clear();
   setPanelContent(house);
@@ -693,6 +756,18 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
   }
 
+  if (key === "m") {
+    event.preventDefault();
+    toggleMap();
+    return;
+  }
+
+  if (key === "escape" && isMapOpen) {
+    event.preventDefault();
+    setMapOpen(false);
+    return;
+  }
+
   if (key === "e" && nearbyHouse) {
     openWebRoom(nearbyHouse);
     return;
@@ -711,6 +786,9 @@ enterRoomButton.addEventListener("click", () => {
   }
 });
 
+toggleMapButton.addEventListener("click", toggleMap);
+closeMapButton.addEventListener("click", () => setMapOpen(false));
+
 closeWebRoomButton.addEventListener("click", closeWebRoom);
 
 webRoom.addEventListener("click", (event) => {
@@ -725,5 +803,6 @@ webRoomSearchForm.addEventListener("submit", async (event) => {
 });
 
 updatePlayerRender();
+renderMapHouseMarkers();
 setPanelContent(null);
 requestAnimationFrame(gameLoop);

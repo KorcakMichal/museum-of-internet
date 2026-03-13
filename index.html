@@ -79,10 +79,25 @@
                 <span class="body"></span>
               </div>
             </div>
-
-            </div>
           </div>
           <div id="interactionPrompt" class="interaction-prompt hidden" aria-live="polite"></div>
+
+          <section id="mapOverlay" class="map-overlay hidden" aria-hidden="true" aria-label="Town map overview">
+            <header class="map-overlay-header">
+              <div>
+                <p class="panel-label">Town Navigator</p>
+                <h3>Map Overview</h3>
+              </div>
+              <button id="closeMapButton" class="button button-secondary" type="button">Close Map</button>
+            </header>
+
+            <div id="miniMap" class="mini-map" role="img" aria-label="Overview map with houses and player position">
+              <div id="mapHouseMarkers" class="map-house-markers"></div>
+              <div id="mapPlayerMarker" class="map-player-marker" aria-hidden="true"></div>
+            </div>
+
+            <p class="map-overlay-hint">Press M to toggle this view while walking around.</p>
+          </section>
         </div>
 
         <aside class="panel" id="infoPanel">
@@ -98,6 +113,9 @@
             <a id="visitLink" class="button button-primary disabled" href="#" target="_blank" rel="noreferrer">
               Visit Website
             </a>
+            <button id="toggleMapButton" class="button button-secondary" type="button">
+              Show Map
+            </button>
           </div>
           <ul id="panelFacts" class="facts-list">
             <li>Wikipedia House: a public knowledge library.</li>
