@@ -11,12 +11,8 @@
   --road-line: #fff3c3;
   --square: #c6905b;
   --shadow: rgba(31, 36, 48, 0.16);
-  --wiki: #efeadf;
-  --wiki-roof: #5f646f;
-  --google: #fff1ca;
-  --google-roof: #eb6a4b;
-  --archive: #d9efe7;
-  --archive-roof: #1f8a70;
+  --house-base: #efeadf;
+  --house-roof-base: #5f646f;
   --player: #2048a0;
   --player-accent: #ffc63d;
 }
@@ -44,16 +40,6 @@ body {
   padding: 0;
 }
 
-.hud {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: end;
-  margin: 0 auto 20px;
-  max-width: 1380px;
-}
-
-.eyebrow,
 .panel-label {
   margin: 0 0 8px;
   text-transform: uppercase;
@@ -62,34 +48,11 @@ body {
   color: var(--muted);
 }
 
-.hud h1 {
-  margin: 0;
-  max-width: 760px;
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: clamp(2rem, 4vw, 3.7rem);
-  line-height: 0.95;
-}
-
-.hud-card,
 .panel {
   backdrop-filter: blur(12px);
   background: var(--panel);
   border: 1px solid var(--panel-border);
   box-shadow: 0 16px 40px rgba(49, 40, 24, 0.08);
-}
-
-.hud-card {
-  min-width: 280px;
-  padding: 14px 16px;
-  border-radius: 18px;
-}
-
-.hud-card p {
-  margin: 0;
-}
-
-.hud-card p + p {
-  margin-top: 8px;
 }
 
 .game-layout {
@@ -202,21 +165,6 @@ body {
   height: 180px;
 }
 
-.lot-wikipedia {
-  top: 96px;
-  left: 110px;
-}
-
-.lot-google {
-  top: 96px;
-  right: 110px;
-}
-
-.lot-archive {
-  bottom: 92px;
-  right: 165px;
-}
-
 .lot-browser {
   bottom: 92px;
   left: 165px;
@@ -225,8 +173,8 @@ body {
 .house {
   position: absolute;
   inset: 0;
-  --house-roof: var(--wiki-roof);
-  --house-body: var(--wiki);
+  --house-roof: var(--house-roof-base);
+  --house-body: var(--house-base);
   transform-origin: center bottom;
   transition: transform 140ms ease, filter 140ms ease;
 }
@@ -299,24 +247,9 @@ body {
   right: 24px;
 }
 
-.house-wikipedia {
-  --house-roof: var(--wiki-roof);
-  --house-body: var(--wiki);
-}
-
-.house-google {
-  --house-roof: linear-gradient(90deg, #4385f5 0 25%, #34a853 25% 50%, #fbbc05 50% 75%, #ea4335 75%);
-  --house-body: var(--google);
-}
-
-.house-archive {
-  --house-roof: var(--archive-roof);
-  --house-body: var(--archive);
-}
-
 .house-browser {
-  --house-roof: var(--wiki-roof);
-  --house-body: var(--wiki);
+  --house-roof: var(--house-roof-base);
+  --house-body: var(--house-base);
 }
 
 .trees {
@@ -1008,14 +941,9 @@ body {
 }
 
 @media (max-width: 1100px) {
-  .hud,
   .game-layout {
     grid-template-columns: 1fr;
     display: block;
-  }
-
-  .hud-card {
-    margin-top: 16px;
   }
 
   .panel {

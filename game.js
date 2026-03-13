@@ -48,7 +48,7 @@ const houses = [
     description:
       "A flexible navigator house for quick web jumps. Use it when you want one generic browser-style room.",
     facts: [
-      "Same visual style as Wikipedia House.",
+      "Central hub for creating custom website houses.",
       "Best for general queries and direct URLs.",
       "Acts as a utility browser inside the town.",
     ],
@@ -560,44 +560,6 @@ function renderChipRow(house) {
   return row;
 }
 
-function getWebsiteShortcutActions(house, query = "") {
-  const host = getSiteHost(house.url);
-  const encodedHost = encodeURIComponent(host || house.url);
-  const trimmedQuery = query.trim();
-  const encodedQuery = encodeURIComponent(trimmedQuery);
-  const siteSearchSuffix = trimmedQuery ? `%20site%3A${encodedHost}` : `site%3A${encodedHost}`;
-
-  return [
-    {
-      title: "Homepage Portal",
-      description: `Open the main site for ${host || house.name}.`,
-      actions: [makeLink("Open Homepage", house.url, "button-primary")],
-    },
-    {
-      title: trimmedQuery ? `Search ${host}` : `Search ${host || house.name}`,
-      description: trimmedQuery
-        ? `Use external search engines to look only inside ${host}.`
-        : "Type a query above to search inside this site from the room.",
-      actions: trimmedQuery
-        ? [
-            makeLink("Google Site Search", `https://www.google.com/search?q=${encodedQuery}${siteSearchSuffix}`, "button-primary"),
-            makeLink("DuckDuckGo Site Search", `https://duckduckgo.com/?q=${encodedQuery}%20site%3A${encodedHost}`),
-          ]
-        : [makeLink("Open Homepage", house.url, "button-primary")],
-    },
-    {
-      title: "Archive Route",
-      description: "Check the Wayback Machine for snapshots of this website.",
-      actions: [
-        makeLink(
-          "Open History",
-          `https://web.archive.org/web/*/${encodeURIComponent(house.url)}`
-        ),
-      ],
-    },
-  ];
-}
-
 function renderWebsiteShortcutRoom(house, query = "") {
   clearElement(webRoomResults);
   setWebRoomResultsVisible(false);
@@ -708,140 +670,6 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function fetchWikipediaSummary(title) {
-  const encodedTitle = encodeURIComponent(title.replace(/\s+/g, "_"));
-  return fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`);
-}
-
-async function runWikipediaSearch(query) {
-  setStatus(`Searching Wikipedia for \"${query}\"...`);
-  clearElement(webRoomResults);
-
-  const data = await fetchJson(
-    `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`
-  );
-  const titles = data[1] || [];
-  const descriptions = data[2] || [];
-  const links = data[3] || [];
-
-  if (titles.length === 0) {
-    setStatus("No Wikipedia results came back for that query.");
-    webRoomResults.appendChild(
-      makeCard({
-        title: "No results",
-        description: "Try a broader topic, a proper name, or fewer words.",
-        hero: true,
-      })
-    );
-    return;
-  }
-
-  const summary = await fetchWikipediaSummary(titles[0]).catch(() => null);
-
-  if (summary) {
-    webRoomResults.appendChild(
-      makeCard({
-        title: summary.title,
-        description: summary.extract,
-        meta: summary.description || "Wikipedia article preview",
-        hero: true,
-        actions: [
-          makeLink("Open Article", summary.content_urls?.desktop?.page || links[0], "button-primary"),
-          makeButton("Preview Another Result", () => {
-            setStatus("Pick another result below to load a different summary.");
-          }),
-        ],
-      })
-    );
-  }
-
-  titles.forEach((title, index) => {
-    webRoomResults.appendChild(
-      makeCard({
-        title,
-        description: descriptions[index] || "Wikipedia result",
-        actions: [
-          makeButton("Preview Here", async () => {
-            setStatus(`Loading summary for ${title}...`);
-            try {
-              const preview = await fetchWikipediaSummary(title);
-              const firstCard = webRoomResults.querySelector(".web-card.hero");
-              const previewCard = makeCard({
-                title: preview.title,
-                description: preview.extract,
-                meta: preview.description || "Wikipedia article preview",
-                hero: true,
-                actions: [makeLink("Open Article", preview.content_urls?.desktop?.page || links[index], "button-primary")],
-              });
-
-              if (firstCard) {
-                firstCard.replaceWith(previewCard);
-              } else {
-                webRoomResults.prepend(previewCard);
-              }
-              setStatus(`Loaded ${title}.`);
-            } catch (error) {
-              setStatus("Wikipedia preview failed. You can still open the article directly.");
-            }
-          }),
-          makeLink("Open Article", links[index]),
-        ],
-      })
-    );
-  });
-
-  setStatus(`Wikipedia returned ${titles.length} result${titles.length === 1 ? "" : "s"}.`);
-}
-
-function runGoogleSearch(query) {
-  setStatus(`Prepared Google routes for \"${query}\".`);
-  clearElement(webRoomResults);
-
-  const encoded = encodeURIComponent(query);
-  const hero = makeCard({
-    title: `Search routes for \"${query}\"`,
-    description:
-      "This room cannot render Google itself, but it can let the player shape the trip before stepping through the real portal.",
-    hero: true,
-  });
-  webRoomResults.appendChild(hero);
-
-  [
-    {
-      title: "Web Search Corridor",
-      description: "Standard Google results page.",
-      href: `https://www.google.com/search?q=${encoded}`,
-      label: "Open Web Search",
-    },
-    {
-      title: "Images Corridor",
-      description: "Jump directly into image search.",
-      href: `https://www.google.com/search?tbm=isch&q=${encoded}`,
-      label: "Open Images",
-    },
-    {
-      title: "News Corridor",
-      description: "Use Google News style search results.",
-      href: `https://www.google.com/search?tbm=nws&q=${encoded}`,
-      label: "Open News",
-    },
-    {
-      title: "Maps Corridor",
-      description: "Turn a place-based query into a map search.",
-      href: `https://www.google.com/maps/search/${encoded}`,
-      label: "Open Maps",
-    },
-  ].forEach((item) => {
-    webRoomResults.appendChild(
-      makeCard({
-        title: item.title,
-        description: item.description,
-        actions: [makeLink(item.label, item.href, "button-primary")],
-      })
-    );
-  });
-}
-
 function looksLikeUrl(query) {
   return query.includes(".") || query.startsWith("http://") || query.startsWith("https://");
 }
@@ -941,105 +769,6 @@ function buildWebsiteCandidates(query, apiResults, limit = 10) {
     .sort((a, b) => a.priority - b.priority || a.host.localeCompare(b.host))
     .slice(0, limit)
     .map(({ host, url, description }) => ({ host, url, description }));
-}
-
-async function runArchiveSearch(query) {
-  clearElement(webRoomResults);
-
-  if (!looksLikeUrl(query)) {
-    setStatus(`Prepared archive.org search routes for \"${query}\".`);
-    const encoded = encodeURIComponent(query);
-    webRoomResults.appendChild(
-      makeCard({
-        title: `Archive search for \"${query}\"`,
-        description:
-          "This vault can search archive.org collections even when you are not starting from a single URL.",
-        hero: true,
-      })
-    );
-
-    [
-      {
-        title: "General Search",
-        description: "Search all archive.org collections.",
-        href: `https://archive.org/search?query=${encoded}`,
-      },
-      {
-        title: "Texts",
-        description: "Search books, scans, and documents.",
-        href: `https://archive.org/search?query=${encoded}%20mediatype%3Atexts`,
-      },
-      {
-        title: "Video",
-        description: "Search moving image collections.",
-        href: `https://archive.org/search?query=${encoded}%20mediatype%3Amovies`,
-      },
-      {
-        title: "Audio",
-        description: "Search audio collections.",
-        href: `https://archive.org/search?query=${encoded}%20mediatype%3Aaudio`,
-      },
-    ].forEach((item) => {
-      webRoomResults.appendChild(
-        makeCard({
-          title: item.title,
-          description: item.description,
-          actions: [makeLink("Open Search", item.href, "button-primary")],
-        })
-      );
-    });
-    return;
-  }
-
-  const normalizedQuery = query.startsWith("http://") || query.startsWith("https://") ? query : `https://${query}`;
-  setStatus(`Checking the Wayback Machine for ${normalizedQuery}...`);
-
-  const data = await fetchJson(
-    `https://archive.org/wayback/available?url=${encodeURIComponent(normalizedQuery)}`
-  );
-  const closest = data.archived_snapshots?.closest;
-
-  if (!closest) {
-    setStatus("No saved snapshot was found for that URL.");
-    webRoomResults.appendChild(
-      makeCard({
-        title: "No snapshot found",
-        description:
-          "The Wayback Machine did not return a saved page for that address. Try another URL or use a topic search instead.",
-        hero: true,
-      })
-    );
-    return;
-  }
-
-  const date = closest.timestamp
-    ? `${closest.timestamp.slice(0, 4)}-${closest.timestamp.slice(4, 6)}-${closest.timestamp.slice(6, 8)} ${closest.timestamp.slice(8, 10)}:${closest.timestamp.slice(10, 12)}`
-    : "Unknown date";
-
-  webRoomResults.appendChild(
-    makeCard({
-      title: "Closest preserved snapshot",
-      description: `A saved capture exists for ${normalizedQuery}.`,
-      meta: `${date} | ${closest.status || "saved"}`,
-      hero: true,
-      actions: [makeLink("Open Snapshot", closest.url, "button-primary")],
-    })
-  );
-
-  webRoomResults.appendChild(
-    makeCard({
-      title: "Open full timeline",
-      description: "Jump into the archive calendar to browse more captures of the same address.",
-      actions: [
-        makeLink(
-          "Open Timeline",
-          `https://web.archive.org/web/*/${encodeURIComponent(normalizedQuery)}`
-        ),
-      ],
-    })
-  );
-
-  setStatus("Wayback snapshot loaded.");
 }
 
 async function runBrowserSearch(query) {
@@ -1143,8 +872,8 @@ async function runBrowserSearch(query) {
   setStatus(`Found ${websiteCandidates.length} possible website${websiteCandidates.length === 1 ? "" : "s"}.`);
 }
 
-async function runWebsiteShortcutSearch(query, house) {
-  renderWebsiteShortcutRoom(house, query);
+async function runWebsiteShortcutSearch(house) {
+  renderWebsiteShortcutRoom(house);
   const host = getSiteHost(house.url) || house.url;
   setStatus(`Indoor mode active for ${host}. Use the game area and Open Real Site button.`);
 }
@@ -1163,9 +892,6 @@ async function handleWebRoomSearch(query) {
   try {
     const trimmedQuery = query.trim();
     const handlers = {
-      wikipedia: () => runWikipediaSearch(trimmedQuery),
-      google: () => runGoogleSearch(trimmedQuery),
-      archive: () => runArchiveSearch(trimmedQuery),
       browser: () => runBrowserSearch(trimmedQuery),
     };
 
@@ -1176,7 +902,7 @@ async function handleWebRoomSearch(query) {
     }
 
     if (isWebsiteShortcutHouse(activeWebRoomHouse)) {
-      await runWebsiteShortcutSearch(trimmedQuery, activeWebRoomHouse);
+      await runWebsiteShortcutSearch(activeWebRoomHouse);
       return;
     }
 
