@@ -4,6 +4,7 @@ const promptElement = document.getElementById("interactionPrompt");
 const panelTitle = document.getElementById("panelTitle");
 const panelDescription = document.getElementById("panelDescription");
 const panelFacts = document.getElementById("panelFacts");
+const houseBrowserList = document.getElementById("houseBrowserList");
 const enterRoomButton = document.getElementById("enterRoomButton");
 const visitLink = document.getElementById("visitLink");
 const toggleMapButton = document.getElementById("toggleMapButton");
@@ -20,7 +21,6 @@ const webRoomResults = document.getElementById("webRoomResults");
 const closeWebRoomButton = document.getElementById("closeWebRoomButton");
 const mapOverlay = document.getElementById("mapOverlay");
 const closeMapButton = document.getElementById("closeMapButton");
-const miniMap = document.getElementById("miniMap");
 const mapHouseMarkers = document.getElementById("mapHouseMarkers");
 const mapPlayerMarker = document.getElementById("mapPlayerMarker");
 
@@ -56,6 +56,8 @@ const houses = [
     roomIntro:
       "Search Wikipedia from inside the house. The room fetches article suggestions and a summary preview without leaving the game.",
     searchPlaceholder: "Search for a person, idea, place, or event",
+    townFact: "Wikipedia House: a public knowledge library.",
+    chips: ["internet", "museum", "world wide web", "Alan Turing"],
     lot: { x: 110, y: 96, width: 210, height: 180 },
     collision: { x: 146, y: 152, width: 138, height: 118 },
     interactZone: { x: 132, y: 210, width: 166, height: 84 },
@@ -76,6 +78,10 @@ const houses = [
     roomIntro:
       "Google blocks live embedding, so this room acts like a search concierge: type a query and choose which corridor to take.",
     searchPlaceholder: "Type what you want to search for",
+    townFact: "Google House: a bright search engine lobby.",
+    chips: ["best museums", "history of the web", "pixel art town", "maps of Prague"],
+    roomTip:
+      "Google does not allow a live website embed here. Instead, the room lets you shape the search and choose a destination like web, images, news, or maps.",
     lot: { x: 960, y: 96, width: 210, height: 180 },
     collision: { x: 996, y: 152, width: 138, height: 118 },
     interactZone: { x: 982, y: 210, width: 166, height: 84 },
@@ -96,11 +102,39 @@ const houses = [
     roomIntro:
       "Use a URL to ask the Wayback Machine for the closest saved snapshot, or use a topic to jump into archive.org search.",
     searchPlaceholder: "Paste a URL or type a topic",
+    townFact: "Archive House: a memory vault for internet history.",
+    chips: ["wikipedia.org", "google.com", "flash games", "old web design"],
     lot: { x: 905, y: 448, width: 210, height: 180 },
     collision: { x: 941, y: 504, width: 138, height: 118 },
     interactZone: { x: 927, y: 562, width: 166, height: 84 },
   },
+  {
+    id: "browser",
+    name: "Browser House",
+    url: "https://duckduckgo.com/",
+    description:
+      "A flexible navigator house for quick web jumps. Use it when you want one generic browser-style room.",
+    facts: [
+      "Same visual style as Wikipedia House.",
+      "Best for general queries and direct URLs.",
+      "Acts as a utility browser inside the town.",
+    ],
+    roomMode: "Navigator Room",
+    roomAddress: "museum://browser-house/navigator",
+    roomIntro:
+      "Type a URL or a search query. This room prepares direct routes to open the web quickly.",
+    searchPlaceholder: "Type a URL like example.com or a search query",
+    townFact: "Browser House: a general web navigator room.",
+    chips: ["open source browsers", "web standards", "example.com", "internet history"],
+    roomTip:
+      "Paste a direct URL to open it immediately, or use a query to get multiple search routes.",
+    lot: { x: 165, y: 448, width: 210, height: 180 },
+    collision: { x: 201, y: 504, width: 138, height: 118 },
+    interactZone: { x: 187, y: 562, width: 166, height: 84 },
+  },
 ];
+
+const defaultPanelFacts = houses.map((house) => house.townFact);
 
 const obstacles = [
   { x: 0, y: 0, width: worldBounds.width, height: 70 },
@@ -113,12 +147,6 @@ let selectedHouse = null;
 let lastTimestamp = 0;
 let activeWebRoomHouse = null;
 let isMapOpen = false;
-
-const chipQueries = {
-  wikipedia: ["internet", "museum", "world wide web", "Alan Turing"],
-  google: ["best museums", "history of the web", "pixel art town", "maps of Prague"],
-  archive: ["wikipedia.org", "google.com", "flash games", "old web design"],
-};
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -255,6 +283,56 @@ function updateNearbyHouse() {
   } else {
     promptElement.classList.add("hidden");
   }
+
+  updateHouseBrowserState();
+}
+
+function updateHouseBrowserState() {
+  houseBrowserList.querySelectorAll(".house-browser-item").forEach((item) => {
+    const houseId = item.dataset.houseId;
+    const isSelected = selectedHouse && selectedHouse.id === houseId;
+    const isNearby = nearbyHouse && nearbyHouse.id === houseId;
+
+    item.classList.toggle("active", Boolean(isSelected));
+    item.classList.toggle("nearby", Boolean(isNearby));
+  });
+}
+
+function renderHouseBrowser() {
+  houseBrowserList.innerHTML = "";
+
+  houses.forEach((house) => {
+    const item = document.createElement("article");
+    item.className = "house-browser-item";
+    item.dataset.houseId = house.id;
+
+    const title = document.createElement("h3");
+    title.className = "house-browser-title";
+    title.textContent = house.name;
+
+    const actions = document.createElement("div");
+    actions.className = "house-browser-actions";
+
+    const focusButton = makeButton("Focus", () => {
+      setPanelContent(house);
+      setMapOpen(false);
+    });
+
+    const enterButton = makeButton("Open", () => {
+      openWebRoom(house);
+    }, "button-primary");
+
+    const visitButton = makeLink("Visit", house.url);
+
+    actions.appendChild(focusButton);
+    actions.appendChild(enterButton);
+    actions.appendChild(visitButton);
+    item.appendChild(title);
+    item.appendChild(actions);
+    houseBrowserList.appendChild(item);
+  });
+
+  updateHouseBrowserState();
 }
 
 function renderFacts(items) {
@@ -324,8 +402,8 @@ function makeCard({ title, description, meta, hero = false, actions = [] }) {
   return card;
 }
 
-function renderChipRow(houseId) {
-  const chips = chipQueries[houseId] || [];
+function renderChipRow(house) {
+  const chips = house.chips || [];
   if (chips.length === 0) {
     return null;
   }
@@ -358,17 +436,16 @@ function setDefaultWebRoomContent(house) {
   });
   webRoomResults.appendChild(intro);
 
-  const chipRow = renderChipRow(house.id);
+  const chipRow = renderChipRow(house);
   if (chipRow) {
     webRoomResults.appendChild(chipRow);
   }
 
-  if (house.id === "google") {
+  if (house.roomTip) {
     webRoomResults.appendChild(
       makeCard({
         title: "How this house works",
-        description:
-          "Google does not allow a live website embed here. Instead, the room lets you shape the search and choose a destination like web, images, news, or maps.",
+        description: house.roomTip,
       })
     );
   }
@@ -381,14 +458,11 @@ function setPanelContent(house) {
     panelTitle.textContent = "Town Square";
     panelDescription.textContent =
       "Walk up to a house and press E. Each building represents a real place on the internet.";
-    renderFacts([
-      "Wikipedia House: a public knowledge library.",
-      "Google House: a bright search engine lobby.",
-      "Archive House: a memory vault for internet history.",
-    ]);
+    renderFacts(defaultPanelFacts);
     enterRoomButton.classList.add("disabled");
     visitLink.classList.add("disabled");
     visitLink.href = "#";
+    updateHouseBrowserState();
     return;
   }
 
@@ -398,6 +472,7 @@ function setPanelContent(house) {
   enterRoomButton.classList.remove("disabled");
   visitLink.href = house.url;
   visitLink.classList.remove("disabled");
+  updateHouseBrowserState();
 }
 
 function openWebRoom(house) {
@@ -681,6 +756,70 @@ async function runArchiveSearch(query) {
   setStatus("Wayback snapshot loaded.");
 }
 
+function runBrowserSearch(query) {
+  clearElement(webRoomResults);
+
+  if (looksLikeUrl(query)) {
+    const normalized = query.startsWith("http://") || query.startsWith("https://") ? query : `https://${query}`;
+    setStatus(`Prepared direct link for ${normalized}.`);
+    webRoomResults.appendChild(
+      makeCard({
+        title: "Direct URL detected",
+        description: "Open this address directly from the navigator room.",
+        hero: true,
+        actions: [makeLink("Open URL", normalized, "button-primary")],
+      })
+    );
+    return;
+  }
+
+  const encoded = encodeURIComponent(query);
+  setStatus(`Prepared browser routes for \"${query}\".`);
+
+  webRoomResults.appendChild(
+    makeCard({
+      title: `Navigator routes for \"${query}\"`,
+      description: "Pick the route you want to open in a new tab.",
+      hero: true,
+    })
+  );
+
+  [
+    {
+      title: "DuckDuckGo",
+      description: "Privacy-focused web search.",
+      href: `https://duckduckgo.com/?q=${encoded}`,
+      label: "Open DuckDuckGo",
+    },
+    {
+      title: "Google Web Search",
+      description: "Standard Google results for this query.",
+      href: `https://www.google.com/search?q=${encoded}`,
+      label: "Open Google",
+    },
+    {
+      title: "Wikipedia Search",
+      description: "Jump straight into Wikipedia search.",
+      href: `https://en.wikipedia.org/w/index.php?search=${encoded}`,
+      label: "Open Wikipedia",
+    },
+    {
+      title: "YouTube Search",
+      description: "Search videos for this topic.",
+      href: `https://www.youtube.com/results?search_query=${encoded}`,
+      label: "Open YouTube",
+    },
+  ].forEach((item) => {
+    webRoomResults.appendChild(
+      makeCard({
+        title: item.title,
+        description: item.description,
+        actions: [makeLink(item.label, item.href, "button-primary")],
+      })
+    );
+  });
+}
+
 async function handleWebRoomSearch(query) {
   if (!activeWebRoomHouse) {
     return;
@@ -693,18 +832,17 @@ async function handleWebRoomSearch(query) {
   }
 
   try {
-    if (activeWebRoomHouse.id === "wikipedia") {
-      await runWikipediaSearch(query.trim());
-      return;
-    }
+    const trimmedQuery = query.trim();
+    const handlers = {
+      wikipedia: () => runWikipediaSearch(trimmedQuery),
+      google: () => runGoogleSearch(trimmedQuery),
+      archive: () => runArchiveSearch(trimmedQuery),
+      browser: () => runBrowserSearch(trimmedQuery),
+    };
 
-    if (activeWebRoomHouse.id === "google") {
-      runGoogleSearch(query.trim());
-      return;
-    }
-
-    if (activeWebRoomHouse.id === "archive") {
-      await runArchiveSearch(query.trim());
+    const selectedHandler = handlers[activeWebRoomHouse.id];
+    if (selectedHandler) {
+      await selectedHandler();
     }
   } catch (error) {
     setStatus("That interaction failed. The external site links are still available.");
@@ -804,5 +942,6 @@ webRoomSearchForm.addEventListener("submit", async (event) => {
 
 updatePlayerRender();
 renderMapHouseMarkers();
+renderHouseBrowser();
 setPanelContent(null);
 requestAnimationFrame(gameLoop);

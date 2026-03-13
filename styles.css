@@ -213,9 +213,16 @@ body {
   right: 165px;
 }
 
+.lot-browser {
+  bottom: 92px;
+  left: 165px;
+}
+
 .house {
   position: absolute;
   inset: 0;
+  --house-roof: var(--wiki-roof);
+  --house-body: var(--wiki);
   transform-origin: center bottom;
   transition: transform 140ms ease, filter 140ms ease;
 }
@@ -232,6 +239,7 @@ body {
   width: 158px;
   height: 74px;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: var(--house-roof);
 }
 
 .body {
@@ -240,6 +248,7 @@ body {
   right: 34px;
   bottom: 12px;
   height: 112px;
+  background: var(--house-body);
   border-radius: 18px;
   box-shadow: 0 10px 18px var(--shadow);
 }
@@ -286,28 +295,24 @@ body {
   right: 24px;
 }
 
-.house-wikipedia .roof {
-  background: var(--wiki-roof);
+.house-wikipedia {
+  --house-roof: var(--wiki-roof);
+  --house-body: var(--wiki);
 }
 
-.house-wikipedia .body {
-  background: var(--wiki);
+.house-google {
+  --house-roof: linear-gradient(90deg, #4385f5 0 25%, #34a853 25% 50%, #fbbc05 50% 75%, #ea4335 75%);
+  --house-body: var(--google);
 }
 
-.house-google .roof {
-  background: linear-gradient(90deg, #4385f5 0 25%, #34a853 25% 50%, #fbbc05 50% 75%, #ea4335 75%);
+.house-archive {
+  --house-roof: var(--archive-roof);
+  --house-body: var(--archive);
 }
 
-.house-google .body {
-  background: var(--google);
-}
-
-.house-archive .roof {
-  background: var(--archive-roof);
-}
-
-.house-archive .body {
-  background: var(--archive);
+.house-browser {
+  --house-roof: var(--wiki-roof);
+  --house-body: var(--wiki);
 }
 
 .trees {
@@ -717,6 +722,59 @@ body {
   margin-top: 10px;
 }
 
+.house-browser-panel {
+  margin: 4px 0 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(31, 36, 48, 0.1);
+}
+
+.house-browser-list {
+  display: grid;
+  gap: 10px;
+  max-height: 270px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.house-browser-item {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(31, 36, 48, 0.1);
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.house-browser-item.active {
+  border-color: rgba(31, 36, 48, 0.45);
+  box-shadow: 0 8px 20px rgba(31, 36, 48, 0.12);
+}
+
+.house-browser-item.nearby {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(31, 36, 48, 0.16);
+}
+
+.house-browser-title {
+  margin: 0;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 1.05rem;
+}
+
+.house-browser-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.house-browser-actions .button {
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
 @media (max-width: 1100px) {
   .hud,
   .game-layout {
@@ -747,6 +805,11 @@ body {
   }
 
   .browser-search {
+    grid-template-columns: 1fr;
+  }
+
+  .house-browser-actions {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
