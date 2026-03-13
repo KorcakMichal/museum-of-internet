@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Museum of Internet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Bricolage+Grotesque:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hud">
+        <div>
+          <p class="eyebrow">Museum Of Internet</p>
+          <h1>Walk through a town where websites live in houses.</h1>
+        </div>
+        <div class="hud-card">
+          <p>Move with <strong>WASD</strong> or <strong>arrow keys</strong>.</p>
+          <p>Press <strong>E</strong> near a house to interact.</p>
+        </div>
+      </section>
+
+      <section class="game-layout">
+        <div class="world-frame">
+          <div id="world" class="world" aria-label="Town map">
+            <div class="skyline"></div>
+            <div class="road road-horizontal"></div>
+            <div class="road road-vertical"></div>
+            <div class="square"></div>
+
+            <div class="lot lot-wikipedia">
+              <div class="house house-wikipedia" data-house-id="wikipedia">
+                <div class="roof"></div>
+                <div class="body">
+                  <div class="sign">Wikipedia</div>
+                  <div class="door"></div>
+                  <div class="window left"></div>
+                  <div class="window right"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lot lot-google">
+              <div class="house house-google" data-house-id="google">
+                <div class="roof"></div>
+                <div class="body">
+                  <div class="sign">Google</div>
+                  <div class="door"></div>
+                  <div class="window left"></div>
+                  <div class="window right"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lot lot-archive">
+              <div class="house house-archive" data-house-id="archive">
+                <div class="roof"></div>
+                <div class="body">
+                  <div class="sign">Archive</div>
+                  <div class="door"></div>
+                  <div class="window left"></div>
+                  <div class="window right"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="trees trees-top"></div>
+            <div class="trees trees-bottom"></div>
+
+            <div id="player" class="player" aria-label="Player character">
+              <div class="player-shadow"></div>
+              <div class="player-sprite">
+                <span class="head"></span>
+                <span class="body"></span>
+              </div>
+            </div>
+
+            <div id="interactionPrompt" class="interaction-prompt hidden" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <aside class="panel" id="infoPanel">
+          <p class="panel-label">Nearby</p>
+          <h2 id="panelTitle">Town Square</h2>
+          <p id="panelDescription">
+            Walk up to a house and press E. Each building represents a real place on the internet.
+          </p>
+          <div class="panel-actions">
+            <button id="enterRoomButton" class="button button-primary disabled" type="button">
+              Open Web Room
+            </button>
+            <a id="visitLink" class="button button-primary disabled" href="#" target="_blank" rel="noreferrer">
+              Visit Website
+            </a>
+            <button id="focusButton" class="button button-secondary" type="button">Center On Player</button>
+          </div>
+          <ul id="panelFacts" class="facts-list">
+            <li>Wikipedia House: a public knowledge library.</li>
+            <li>Google House: a bright search engine lobby.</li>
+            <li>Archive House: a memory vault for internet history.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <div id="webRoom" class="web-room hidden" aria-hidden="true">
+        <div class="web-room-backdrop" data-close-web-room="true"></div>
+        <section class="web-room-shell" role="dialog" aria-modal="true" aria-labelledby="webRoomTitle">
+          <header class="web-room-header">
+            <div>
+              <p class="panel-label">Inside Website House</p>
+              <h2 id="webRoomTitle">Web Room</h2>
+            </div>
+            <button id="closeWebRoomButton" class="button button-secondary" type="button">Close</button>
+          </header>
+
+          <div class="browser-chrome">
+            <span id="webRoomMode" class="browser-mode">Interactive Room</span>
+            <div id="webRoomAddress" class="browser-address">museum://town-square</div>
+          </div>
+
+          <p id="webRoomDescription" class="web-room-description">
+            Enter a house to interact with the website from inside the game.
+          </p>
+
+          <form id="webRoomSearchForm" class="browser-search">
+            <input
+              id="webRoomSearchInput"
+              type="text"
+              name="query"
+              autocomplete="off"
+              placeholder="Type a search or URL"
+            />
+            <button class="button button-primary" type="submit">Use</button>
+          </form>
+
+          <div class="web-room-actions">
+            <a id="webRoomExternalLink" class="button button-secondary" href="#" target="_blank" rel="noreferrer">
+              Open Real Site
+            </a>
+          </div>
+
+          <div id="webRoomStatus" class="web-room-status" aria-live="polite"></div>
+          <section id="webRoomResults" class="web-room-results"></section>
+        </section>
+      </div>
+    </main>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
