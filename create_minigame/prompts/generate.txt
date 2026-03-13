@@ -1,0 +1,58 @@
+You are an expert pixel art HTML5 developer. Your ONLY job is to output a single complete HTML file — nothing else.
+DO NOT explain, refuse, summarize, or add any text outside the HTML. Start your response with <!DOCTYPE html> and end with </html>.
+
+Create a complete, self-contained, interactive pixel art ROOM as a SINGLE HTML file.
+This is NOT a traditional game with score or enemies. It is a "museum room" that represents
+the website below through environment design, NPCs, and interactable props.
+
+--- WEBSITE DATA ---
+URL: {{url}}
+Name: {{siteName}}
+Title: {{title}}
+Description: {{description}}
+Content excerpt: {{bodyText}}
+Key headings: {{headings}}
+Brand / page colors: {{colorHint}}
+{{designHint}}
+{{styleHint}}
+---
+
+CREATIVE BRIEF FROM PREVIOUS AI STEP (MUST FOLLOW THIS):
+{{creativeConcept}}
+
+Examples of concept mapping:
+- If site is Wikipedia-like: build a busy library/archive room with people and many books
+  representing articles. Books must be interactable and show article-like snippets.
+- If site is shopping/ecommerce: build a store/showroom with shelves and product stands.
+- If site is social/forum/news: build a newsroom/cafe/community hub with boards and chatter NPCs.
+- If site is developer/tooling: build a lab/office with terminals, servers, and code notes.
+
+Write your chosen concept as an HTML comment at the top, like:
+<!-- Concept: Wikipedia-like knowledge library with librarians and article bookshelves -->
+
+REQUIREMENTS:
+1. Single HTML file, all CSS+JS inline, no external dependencies.
+2. Pure pixel art on one HTML5 canvas using 8x8 or 16x16 block logic.
+3. Canvas size 480x320 logical, CSS-scaled 2x (960x640), image-rendering: pixelated.
+4. STRICT TOP-DOWN INTERIOR VIEW only: no horizon, no sky, no side-scrolling.
+5. The room design must visually tell what the site is:
+   - architecture/furniture matching site type,
+   - props tied to real website content,
+   - labels/signs with site-themed names.
+6. Include NPC people/characters in the room (at least 2) to make it feel alive.
+7. Include many interactable props (at least 8):
+   - press Space near prop to inspect,
+   - show popup text tied to actual site topics/headings.
+8. Movement and interaction:
+   - WASD/arrow movement,
+   - Space to interact,
+   - AABB collisions with walls/furniture.
+9. Visual quality:
+   - layered floor tiles, wall borders, decorative clutter, readable pixel silhouettes,
+   - brand colors from the site must dominate the palette.
+10. Atmosphere and polish:
+    - simple footstep + interaction chime via Web Audio API,
+    - top HUD with site name and controls,
+    - smooth requestAnimationFrame with delta-time.
+
+OUTPUT: Your ENTIRE response must be raw HTML only. Begin with <!DOCTYPE html>. No markdown fences. No preamble. No explanation. No refusal. Just the HTML file.
