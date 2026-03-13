@@ -113,6 +113,7 @@ export default function App() {
 
           <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
             <div className="room-scene-grid" aria-hidden="true"></div>
+            <div id="roomIndoorBackdrop" className="room-indoor-backdrop hidden" aria-hidden="true"></div>
             <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
               <div id="roomAvatar" className="room-avatar" aria-hidden="true">
                 <div className="player-shadow"></div>

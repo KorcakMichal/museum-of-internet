@@ -13,9 +13,12 @@ import { setMapOpen, renderMapHouseMarkers } from "./ui/map";
 import { movePlayer, updatePlayerRender } from "./logic/movement";
 import { isWebsiteShortcutHouse, runBrowserSearch } from "./logic/search";
 import { getRoomAvatarBox, getRoomObjectBox, moveRoomAvatar } from "./logic/rooms";
+import { generatePixfluxImage } from "./services/pixellab";
 
 export function createGameEngine(refs) {
   const state = createGameState();
+  const indoorBackdropCache = new Map();
+  let activeIndoorRequestController = null;
 
   // --- Internal UI Helpers ---
 
@@ -354,7 +357,6 @@ export function createGameEngine(refs) {
   function setWebRoomContentMode(useIndoorScene) {
     refs.webRoomDescription.classList.toggle("hidden", useIndoorScene);
     refs.webRoomOpenButton?.classList.toggle("hidden", useIndoorScene);
-    refs.webRoomStatus.classList.toggle("hidden", useIndoorScene);
     refs.webRoomResults.classList.toggle("hidden", useIndoorScene);
   }
 
@@ -418,6 +420,133 @@ export function createGameEngine(refs) {
     }
   }
 
+  function clearGeneratedIndoorBackdrop() {
+    refs.roomIndoorBackdrop.classList.add("hidden");
+    refs.roomIndoorBackdrop.style.backgroundImage = "";
+    refs.roomScene.classList.remove("has-generated-indoor");
+  }
+
+  function setGeneratedIndoorBackdrop(imageSource) {
+    if (!imageSource) {
+      clearGeneratedIndoorBackdrop();
+      return;
+    }
+
+    refs.roomIndoorBackdrop.style.backgroundImage = `url(${JSON.stringify(imageSource)})`;
+    refs.roomIndoorBackdrop.classList.remove("hidden");
+    refs.roomScene.classList.add("has-generated-indoor");
+  }
+
+  function extractGeneratedImageSource(result) {
+    const stack = [result];
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) {
+        continue;
+      }
+
+      if (typeof current === "string") {
+        if (current.startsWith("http") || current.startsWith("data:image/")) {
+          return current;
+        }
+        if (/^[A-Za-z0-9+/=\s]+$/.test(current) && current.trim().length > 128) {
+          return `data:image/png;base64,${current.trim()}`;
+        }
+        continue;
+      }
+
+      if (Array.isArray(current)) {
+        current.forEach((item) => stack.push(item));
+        continue;
+      }
+
+      if (typeof current === "object") {
+        const prioritizedKeys = [
+          "image_url",
+          "url",
+          "imageUrl",
+          "output_url",
+          "base64",
+          "image_base64",
+        ];
+
+        prioritizedKeys.forEach((key) => {
+          if (key in current) {
+            stack.push(current[key]);
+          }
+        });
+
+        Object.values(current).forEach((value) => stack.push(value));
+      }
+    }
+
+    return null;
+  }
+
+  async function generateIndoorForHouse(house) {
+    if (!house || !isWebsiteShortcutHouse(house)) {
+      clearGeneratedIndoorBackdrop();
+      return;
+    }
+
+    const cached = indoorBackdropCache.get(house.id);
+    if (cached) {
+      setGeneratedIndoorBackdrop(cached);
+      return;
+    }
+
+    if (activeIndoorRequestController) {
+      activeIndoorRequestController.abort();
+    }
+
+    const controller = new AbortController();
+    activeIndoorRequestController = controller;
+
+    const host = getSiteHost(house.url) || house.name || "website";
+    setStatus(`Generating indoor for ${host} house...`);
+
+    try {
+      const generated = await generatePixfluxImage({
+        description: `pixel art cozy internet office interior for ${host}, retro monitors, side view room`,
+        width: 384,
+        height: 192,
+        noBackground: false,
+        signal: controller.signal,
+      });
+
+      if (activeIndoorRequestController !== controller) {
+        return;
+      }
+
+      const imageSource = extractGeneratedImageSource(generated);
+      if (!imageSource) {
+        throw new Error("PixelLab response did not include image data.");
+      }
+
+      indoorBackdropCache.set(house.id, imageSource);
+
+      if (state.activeWebRoomHouse?.id === house.id) {
+        setGeneratedIndoorBackdrop(imageSource);
+        setStatus("Indoor generated. Move around and press E near objects.");
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+
+      if (state.activeWebRoomHouse?.id === house.id) {
+        clearGeneratedIndoorBackdrop();
+        const message = error instanceof Error ? error.message : "Unknown PixelLab error.";
+        setStatus(`Could not generate indoor image: ${message}`);
+      }
+    } finally {
+      if (activeIndoorRequestController === controller) {
+        activeIndoorRequestController = null;
+      }
+    }
+  }
+
   // --- Core Lifecycle ---
 
   function openWebRoom(house) {
@@ -456,11 +585,14 @@ export function createGameEngine(refs) {
 
     if (useIndoorScene) {
       resetRoomAvatar();
-      setStatus("");
+      clearGeneratedIndoorBackdrop();
+      setStatus("Preparing indoor scene...");
+      generateIndoorForHouse(house);
     } else {
       state.roomKeys.clear();
       state.nearbyRoomObject = null;
       setRoomInteractionHint(null);
+      clearGeneratedIndoorBackdrop();
       setStatus("Navigator room active. Use search below.");
     }
 
@@ -471,6 +603,12 @@ export function createGameEngine(refs) {
   }
 
   function closeWebRoom() {
+    if (activeIndoorRequestController) {
+      activeIndoorRequestController.abort();
+      activeIndoorRequestController = null;
+    }
+
+    clearGeneratedIndoorBackdrop();
     state.activeWebRoomHouse = null;
     state.keys.clear();
     state.roomKeys.clear();

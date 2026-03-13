@@ -36,6 +36,33 @@ npm run build
 npm run preview
 ```
 
+## PixelLab Image Service
+
+The project includes a dedicated PixelLab client service in `src/game/services/pixellab.js`.
+
+Set your token in `.env`:
+
+```dotenv
+VITE_PIXELLAB_SECRET_TOKEN=your-token-here
+```
+
+Usage:
+
+```js
+import { generatePixfluxImage } from './src/game/services/pixellab';
+
+const image = await generatePixfluxImage({
+	description: 'cute dragon',
+	width: 128,
+	height: 128,
+	noBackground: true,
+});
+```
+
+This sends a POST request equivalent to:
+
+`curl https://api.pixellab.ai/v1/generate-image-pixflux --request POST --header 'Content-Type: application/json' --header 'Authorization: Bearer ...' --data '{"description":"cute dragon","image_size":{"height":128,"width":128},"no_background":true}'`
+
 ## Project Structure
 
 - `src/App.jsx`: React UI shell for game DOM.

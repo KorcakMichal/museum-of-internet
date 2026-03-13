@@ -695,9 +695,38 @@ body {
 .room-scene-grid {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background-image: radial-gradient(circle at 1px 1px, rgba(93, 121, 158, 0.3) 1px, transparent 0);
   background-size: 16px 16px;
   opacity: 0.45;
+}
+
+.room-indoor-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  opacity: 0.95;
+}
+
+.room-indoor-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 14, 18, 0.08), rgba(10, 14, 18, 0.22));
+}
+
+.room-scene.has-generated-indoor {
+  background: linear-gradient(180deg, rgba(245, 248, 252, 0.16), rgba(233, 240, 248, 0.2));
+}
+
+.room-scene.has-generated-indoor .room-scene-grid {
+  opacity: 0.12;
 }
 
 .room-walk-area {
