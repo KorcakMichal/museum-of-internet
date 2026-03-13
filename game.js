@@ -9,12 +9,15 @@ const enterRoomButton = document.getElementById("enterRoomButton");
 const visitLink = document.getElementById("visitLink");
 const toggleMapButton = document.getElementById("toggleMapButton");
 const webRoom = document.getElementById("webRoom");
+const webRoomLabel = document.getElementById("webRoomLabel");
 const webRoomTitle = document.getElementById("webRoomTitle");
 const webRoomDescription = document.getElementById("webRoomDescription");
+const indoorGame = document.getElementById("indoorGame");
 const webRoomSearchForm = document.getElementById("webRoomSearchForm");
 const webRoomSearchInput = document.getElementById("webRoomSearchInput");
 const webRoomExternalLink = document.getElementById("webRoomExternalLink");
 const webRoomStatus = document.getElementById("webRoomStatus");
+const webRoomActions = document.querySelector(".web-room-actions");
 const webRoomResults = document.getElementById("webRoomResults");
 const closeWebRoomButton = document.getElementById("closeWebRoomButton");
 const mapOverlay = document.getElementById("mapOverlay");
@@ -38,74 +41,6 @@ const player = {
 const keys = new Set();
 
 const houses = [
-  {
-    id: "wikipedia",
-    name: "Wikipedia House",
-    url: "https://www.wikipedia.org/",
-    description:
-      "A public knowledge house. Imagine shelves, librarians, and an endless set of linked rooms made of articles.",
-    facts: [
-      "Open encyclopedia energy.",
-      "Neutral facade and library mood.",
-      "Best fit for discovery and deep reading.",
-    ],
-    roomMode: "Knowledge Library",
-    roomAddress: "museum://wikipedia-house/library",
-    roomIntro:
-      "Search Wikipedia from inside the house. The room fetches article suggestions and a summary preview without leaving the game.",
-    searchPlaceholder: "Search for a person, idea, place, or event",
-    townFact: "Wikipedia House: a public knowledge library.",
-    chips: ["internet", "museum", "world wide web", "Alan Turing"],
-    lot: { x: 110, y: 96, width: 210, height: 180 },
-    collision: { x: 146, y: 152, width: 138, height: 118 },
-    interactZone: { x: 132, y: 210, width: 166, height: 84 },
-  },
-  {
-    id: "google",
-    name: "Google House",
-    url: "https://www.google.com/",
-    description:
-      "A bright search lobby. You step up to the house and it points you toward the rest of the town.",
-    facts: [
-      "Search-first front door.",
-      "Color-striped roof mirrors the brand palette.",
-      "Feels like a portal more than a library.",
-    ],
-    roomMode: "Search Lobby",
-    roomAddress: "museum://google-house/search-lobby",
-    roomIntro:
-      "Google blocks live embedding, so this room acts like a search concierge: type a query and choose which corridor to take.",
-    searchPlaceholder: "Type what you want to search for",
-    townFact: "Google House: a bright search engine lobby.",
-    chips: ["best museums", "history of the web", "pixel art town", "maps of Prague"],
-    roomTip:
-      "Google does not allow a live website embed here. Instead, the room lets you shape the search and choose a destination like web, images, news, or maps.",
-    lot: { x: 960, y: 96, width: 210, height: 180 },
-    collision: { x: 996, y: 152, width: 138, height: 118 },
-    interactZone: { x: 982, y: 210, width: 166, height: 84 },
-  },
-  {
-    id: "archive",
-    name: "Internet Archive House",
-    url: "https://archive.org/",
-    description:
-      "A preservation vault. This one adds the museum feeling: the internet remembered as a physical archive.",
-    facts: [
-      "Fits the museum theme directly.",
-      "Feels older, quieter, and heavier.",
-      "Useful as a memory-building in the town.",
-    ],
-    roomMode: "Memory Vault",
-    roomAddress: "museum://internet-archive-house/vault",
-    roomIntro:
-      "Use a URL to ask the Wayback Machine for the closest saved snapshot, or use a topic to jump into archive.org search.",
-    searchPlaceholder: "Paste a URL or type a topic",
-    townFact: "Archive House: a memory vault for internet history.",
-    chips: ["wikipedia.org", "google.com", "flash games", "old web design"],
-    lot: { x: 905, y: 448, width: 210, height: 180 },
-    collision: { x: 941, y: 504, width: 138, height: 118 },
-    interactZone: { x: 927, y: 562, width: 166, height: 84 },
-  },
   {
     id: "browser",
     name: "Browser House",
@@ -216,6 +151,19 @@ function getWebsiteDisplayName(host) {
   return normalizedHost;
 }
 
+function isWebsiteShortcutHouse(house) {
+  return house?.interactionType === "website-shortcut";
+}
+
+function getHouseIndoorMeta(house) {
+  return window.houseIndoor?.getIndoorMeta?.(house) || {
+    label: "Inside Website House",
+    title: house?.name || "Web Room",
+    description: house?.roomIntro || "Enter a house to interact with the website from inside the game.",
+    status: "Choose a prompt below or type into the room.",
+  };
+}
+
 function getNextGeneratedLot() {
   return generatedLotSlots.find((slot) => !houses.some((house) => house.lot.x === slot.x && house.lot.y === slot.y));
 }
@@ -278,6 +226,7 @@ function createWebsiteHouse(website) {
     id,
     name: `${displayName} House`,
     url: website.url,
+    interactionType: "website-shortcut",
     description: `A custom website house generated from ${website.host}.`,
     facts: [
       `Generated from: ${website.host}`,
@@ -286,7 +235,7 @@ function createWebsiteHouse(website) {
     ],
     roomMode: "Website Shortcut Room",
     roomAddress: `museum://website-house/${website.host}`,
-    roomIntro: "This custom house was generated from your browser search.",
+    roomIntro: `This custom house was generated from your browser search and points directly to ${website.host}.`,
     searchPlaceholder: "Type a URL or a search query",
     townFact: `${displayName} House: custom website shortcut.`,
     chips: [website.host, `about ${displayName}`, `${displayName} login`],
@@ -527,6 +476,16 @@ function setStatus(message = "") {
   webRoomStatus.textContent = message;
 }
 
+function setWebRoomResultsVisible(visible) {
+  webRoomResults.classList.toggle("hidden", !visible);
+}
+
+function setWebRoomControlsVisible(visible) {
+  webRoomSearchForm.classList.toggle("hidden", !visible);
+  webRoomActions?.classList.toggle("hidden", !visible);
+  webRoomStatus.classList.toggle("hidden", !visible);
+}
+
 function makeButton(label, onClick, variant = "button-secondary") {
   const button = document.createElement("button");
   button.type = "button";
@@ -601,7 +560,57 @@ function renderChipRow(house) {
   return row;
 }
 
+function getWebsiteShortcutActions(house, query = "") {
+  const host = getSiteHost(house.url);
+  const encodedHost = encodeURIComponent(host || house.url);
+  const trimmedQuery = query.trim();
+  const encodedQuery = encodeURIComponent(trimmedQuery);
+  const siteSearchSuffix = trimmedQuery ? `%20site%3A${encodedHost}` : `site%3A${encodedHost}`;
+
+  return [
+    {
+      title: "Homepage Portal",
+      description: `Open the main site for ${host || house.name}.`,
+      actions: [makeLink("Open Homepage", house.url, "button-primary")],
+    },
+    {
+      title: trimmedQuery ? `Search ${host}` : `Search ${host || house.name}`,
+      description: trimmedQuery
+        ? `Use external search engines to look only inside ${host}.`
+        : "Type a query above to search inside this site from the room.",
+      actions: trimmedQuery
+        ? [
+            makeLink("Google Site Search", `https://www.google.com/search?q=${encodedQuery}${siteSearchSuffix}`, "button-primary"),
+            makeLink("DuckDuckGo Site Search", `https://duckduckgo.com/?q=${encodedQuery}%20site%3A${encodedHost}`),
+          ]
+        : [makeLink("Open Homepage", house.url, "button-primary")],
+    },
+    {
+      title: "Archive Route",
+      description: "Check the Wayback Machine for snapshots of this website.",
+      actions: [
+        makeLink(
+          "Open History",
+          `https://web.archive.org/web/*/${encodeURIComponent(house.url)}`
+        ),
+      ],
+    },
+  ];
+}
+
+function renderWebsiteShortcutRoom(house, query = "") {
+  clearElement(webRoomResults);
+  setWebRoomResultsVisible(false);
+}
+
 function setDefaultWebRoomContent(house) {
+  if (isWebsiteShortcutHouse(house)) {
+    renderWebsiteShortcutRoom(house);
+    return;
+  }
+
+  setWebRoomResultsVisible(true);
+
   clearElement(webRoomResults);
 
   const intro = makeCard({
@@ -657,24 +666,31 @@ function openWebRoom(house) {
 
   setMapOpen(false);
   activeWebRoomHouse = house;
+  const indoorMeta = getHouseIndoorMeta(house);
   keys.clear();
   setPanelContent(house);
-  webRoomTitle.textContent = house.name;
-  webRoomDescription.textContent = house.roomIntro;
+  webRoomLabel.textContent = indoorMeta.label;
+  webRoomTitle.textContent = indoorMeta.title;
+  webRoomDescription.textContent = indoorMeta.description;
   webRoomSearchInput.value = "";
   webRoomSearchInput.placeholder = house.searchPlaceholder;
   webRoomExternalLink.href = house.url;
   webRoom.classList.remove("hidden");
   webRoom.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  setStatus("Choose a prompt below or type into the room.");
+  const isShortcutHouse = isWebsiteShortcutHouse(house);
+  setStatus(indoorMeta.status);
+  setWebRoomControlsVisible(!isShortcutHouse);
+  setWebRoomResultsVisible(!isShortcutHouse);
+  window.houseIndoor?.mountGame?.(indoorGame, house);
   setDefaultWebRoomContent(house);
-  webRoomSearchInput.focus();
+  window.houseIndoor?.focusGame?.();
 }
 
 function closeWebRoom() {
   activeWebRoomHouse = null;
   keys.clear();
+  window.houseIndoor?.unmountGame?.();
   webRoom.classList.add("hidden");
   webRoom.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
@@ -1127,6 +1143,12 @@ async function runBrowserSearch(query) {
   setStatus(`Found ${websiteCandidates.length} possible website${websiteCandidates.length === 1 ? "" : "s"}.`);
 }
 
+async function runWebsiteShortcutSearch(query, house) {
+  renderWebsiteShortcutRoom(house, query);
+  const host = getSiteHost(house.url) || house.url;
+  setStatus(`Indoor mode active for ${host}. Use the game area and Open Real Site button.`);
+}
+
 async function handleWebRoomSearch(query) {
   if (!activeWebRoomHouse) {
     return;
@@ -1150,6 +1172,11 @@ async function handleWebRoomSearch(query) {
     const selectedHandler = handlers[activeWebRoomHouse.id];
     if (selectedHandler) {
       await selectedHandler();
+      return;
+    }
+
+    if (isWebsiteShortcutHouse(activeWebRoomHouse)) {
+      await runWebsiteShortcutSearch(trimmedQuery, activeWebRoomHouse);
       return;
     }
 
@@ -1193,6 +1220,10 @@ window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
 
   if (isWebRoomOpen()) {
+    const handledByIndoorGame = window.houseIndoor?.handleKeyDown?.(event);
+    if (handledByIndoorGame) {
+      event.preventDefault();
+    }
     if (key === "escape") {
       event.preventDefault();
       closeWebRoom();
@@ -1225,6 +1256,12 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
+  if (isWebRoomOpen()) {
+    const handledByIndoorGame = window.houseIndoor?.handleKeyUp?.(event);
+    if (handledByIndoorGame) {
+      event.preventDefault();
+    }
+  }
   keys.delete(event.key.toLowerCase());
 });
 

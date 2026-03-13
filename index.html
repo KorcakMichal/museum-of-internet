@@ -14,17 +14,6 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="hud">
-        <div>
-          <p class="eyebrow">Museum Of Internet</p>
-          <h1>Walk through a town where websites live in houses.</h1>
-        </div>
-        <div class="hud-card">
-          <p>Move with <strong>WASD</strong> or <strong>arrow keys</strong>.</p>
-          <p>Press <strong>E</strong> near a house to interact.</p>
-        </div>
-      </section>
-
       <section class="game-layout">
         <div class="world-frame">
           <div id="world" class="world" aria-label="Town map">
@@ -32,42 +21,6 @@
             <div class="road road-horizontal"></div>
             <div class="road road-vertical"></div>
             <div class="square"></div>
-
-            <div class="lot lot-wikipedia">
-              <div class="house house-wikipedia" data-house-id="wikipedia">
-                <div class="roof"></div>
-                <div class="body">
-                  <div class="sign">Wikipedia</div>
-                  <div class="door"></div>
-                  <div class="window left"></div>
-                  <div class="window right"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="lot lot-google">
-              <div class="house house-google" data-house-id="google">
-                <div class="roof"></div>
-                <div class="body">
-                  <div class="sign">Google</div>
-                  <div class="door"></div>
-                  <div class="window left"></div>
-                  <div class="window right"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="lot lot-archive">
-              <div class="house house-archive" data-house-id="archive">
-                <div class="roof"></div>
-                <div class="body">
-                  <div class="sign">Archive</div>
-                  <div class="door"></div>
-                  <div class="window left"></div>
-                  <div class="window right"></div>
-                </div>
-              </div>
-            </div>
 
             <div class="lot lot-browser">
               <div class="house house-browser" data-house-id="browser">
@@ -136,9 +89,6 @@
           </section>
 
           <ul id="panelFacts" class="facts-list">
-            <li>Wikipedia House: a public knowledge library.</li>
-            <li>Google House: a bright search engine lobby.</li>
-            <li>Archive House: a memory vault for internet history.</li>
             <li>Browser House: a general web navigator room.</li>
           </ul>
         </aside>
@@ -149,7 +99,7 @@
         <section class="web-room-shell" role="dialog" aria-modal="true" aria-labelledby="webRoomTitle">
           <header class="web-room-header">
             <div>
-              <p class="panel-label">Inside Website House</p>
+              <p id="webRoomLabel" class="panel-label">Inside Website House</p>
               <h2 id="webRoomTitle">Web Room</h2>
             </div>
             <button id="closeWebRoomButton" class="button button-secondary" type="button">Close</button>
@@ -158,6 +108,8 @@
           <p id="webRoomDescription" class="web-room-description">
             Enter a house to interact with the website from inside the game.
           </p>
+
+          <section id="indoorGame" class="indoor-game-panel" aria-label="Indoor house game"></section>
 
           <form id="webRoomSearchForm" class="browser-search">
             <input
@@ -182,6 +134,7 @@
       </div>
     </main>
 
+    <script src="./house-indoor.js"></script>
     <script src="./game.js"></script>
   </body>
 </html>

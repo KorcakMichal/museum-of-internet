@@ -12,15 +12,14 @@ Small prototype where websites exist as houses in a walkable town.
 
 ## In-page interaction model
 
-- Wikipedia House fetches live article suggestions and summary previews inside the overlay.
-- Google House works like a search lobby: you type a query and choose web, images, news, or maps corridors.
-- Internet Archive House can check the Wayback Machine for a URL or build archive.org search routes for a topic.
+- Browser House is the core navigator room.
+- Searching URLs can create custom website houses in town.
+- Each house now opens an indoor walkable space.
 
 ## Houses included
 
-- Wikipedia
-- Google
-- Internet Archive
+- Browser
+- Generated custom website houses
 
 ## Run
 
