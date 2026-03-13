@@ -102,12 +102,54 @@
               <p id="webRoomLabel" class="panel-label">Inside Website House</p>
               <h2 id="webRoomTitle">Web Room</h2>
             </div>
-            <button id="closeWebRoomButton" class="button button-secondary" type="button">Close</button>
           </header>
 
           <p id="webRoomDescription" class="web-room-description">
             Enter a house to interact with the website from inside the game.
           </p>
+
+          <section id="roomScene" class="room-scene" aria-label="Room scene decoration">
+            <div class="room-scene-grid" aria-hidden="true"></div>
+            <div id="roomWalkArea" class="room-walk-area" aria-label="Walkable room area">
+              <div id="roomAvatar" class="room-avatar" aria-hidden="true">
+                <div class="player-shadow"></div>
+                <div class="player-sprite">
+                  <span class="head"></span>
+                  <span class="body"></span>
+                </div>
+              </div>
+
+              <div id="roomNpc" class="room-npc room-object" aria-hidden="true">
+                <div class="player-shadow"></div>
+                <div class="player-sprite">
+                  <span class="head"></span>
+                  <span class="body"></span>
+                </div>
+              </div>
+
+              <div id="roomNewspapers" class="room-newspapers room-object" aria-hidden="true">
+                <span class="paper p1"></span>
+                <span class="paper p2"></span>
+                <span class="paper p3"></span>
+              </div>
+
+              <p id="roomInteractionHint" class="room-interaction-hint hidden" aria-live="polite"></p>
+            </div>
+            <div class="room-scene-stool" aria-hidden="true">
+              <span class="seat"></span>
+              <span class="leg one"></span>
+              <span class="leg two"></span>
+              <span class="leg three"></span>
+            </div>
+            <div class="room-scene-desks" aria-hidden="true">
+              <div class="desk"></div>
+              <div class="desk"></div>
+              <div class="desk desk-with-papers">
+                <span class="paper p1"></span>
+                <span class="paper p2"></span>
+              </div>
+            </div>
+          </section>
 
           <form id="webRoomSearchForm" class="browser-search">
             <input

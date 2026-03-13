@@ -17,7 +17,13 @@ const webRoomSearchInput = document.getElementById("webRoomSearchInput");
 const webRoomExternalLink = document.getElementById("webRoomExternalLink");
 const webRoomStatus = document.getElementById("webRoomStatus");
 const webRoomResults = document.getElementById("webRoomResults");
-const closeWebRoomButton = document.getElementById("closeWebRoomButton");
+const webRoomActions = webRoom.querySelector(".web-room-actions");
+const roomScene = document.getElementById("roomScene");
+const roomWalkArea = document.getElementById("roomWalkArea");
+const roomAvatar = document.getElementById("roomAvatar");
+const roomNpc = document.getElementById("roomNpc");
+const roomNewspapers = document.getElementById("roomNewspapers");
+const roomInteractionHint = document.getElementById("roomInteractionHint");
 const mapOverlay = document.getElementById("mapOverlay");
 const closeMapButton = document.getElementById("closeMapButton");
 const mapHouseMarkers = document.getElementById("mapHouseMarkers");
@@ -37,6 +43,17 @@ const player = {
 };
 
 const keys = new Set();
+const roomKeys = new Set();
+
+const roomPlayer = {
+  x: 24,
+  y: 150,
+  width: 34,
+  height: 46,
+  speed: 2.8,
+};
+
+let nearbyRoomObject = null;
 
 const houses = [
   {
@@ -319,6 +336,170 @@ function movePlayer(delta) {
   if (canOccupy(player.x, nextY)) {
     player.y = nextY;
   }
+}
+
+function resetRoomAvatar() {
+  roomPlayer.x = 24;
+  roomPlayer.y = 150;
+  nearbyRoomObject = null;
+  setRoomInteractionHint(null);
+  roomNpc?.classList.remove("nearby");
+  roomNewspapers?.classList.remove("nearby");
+  updateRoomAvatarRender(false);
+}
+
+function getRoomAvatarBox() {
+  return {
+    x: roomPlayer.x,
+    y: roomPlayer.y,
+    width: roomPlayer.width,
+    height: roomPlayer.height,
+  };
+}
+
+function getRoomObjectBox(element) {
+  if (!element) {
+    return null;
+  }
+
+  return {
+    x: element.offsetLeft,
+    y: element.offsetTop,
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+  };
+}
+
+function setRoomInteractionHint(target) {
+  if (!roomInteractionHint) {
+    return;
+  }
+
+  if (!target) {
+    roomInteractionHint.textContent = "";
+    roomInteractionHint.classList.add("hidden");
+    return;
+  }
+
+  const labels = {
+    npc: "Press E to talk with the character",
+    newspapers: "Press E to read newspapers",
+  };
+
+  roomInteractionHint.textContent = labels[target] || "Press E to interact";
+  roomInteractionHint.classList.remove("hidden");
+}
+
+function updateRoomNearbyObject() {
+  if (!roomWalkArea || !roomAvatar) {
+    nearbyRoomObject = null;
+    return;
+  }
+
+  const avatar = getRoomAvatarBox();
+  const checkArea = {
+    x: avatar.x - 14,
+    y: avatar.y - 14,
+    width: avatar.width + 28,
+    height: avatar.height + 28,
+  };
+
+  const npcBox = getRoomObjectBox(roomNpc);
+  const newspapersBox = getRoomObjectBox(roomNewspapers);
+
+  if (roomNpc) {
+    roomNpc.classList.toggle("nearby", Boolean(npcBox && intersects(checkArea, npcBox)));
+  }
+  if (roomNewspapers) {
+    roomNewspapers.classList.toggle("nearby", Boolean(newspapersBox && intersects(checkArea, newspapersBox)));
+  }
+
+  if (npcBox && intersects(checkArea, npcBox)) {
+    nearbyRoomObject = "npc";
+  } else if (newspapersBox && intersects(checkArea, newspapersBox)) {
+    nearbyRoomObject = "newspapers";
+  } else {
+    nearbyRoomObject = null;
+  }
+
+  setRoomInteractionHint(nearbyRoomObject);
+}
+
+function interactWithRoomObject() {
+  if (!nearbyRoomObject || !activeWebRoomHouse) {
+    if (isCustomIndoorRoomOpen()) {
+      roomInteractionHint.textContent = "Move closer to the character or newspapers.";
+      roomInteractionHint.classList.remove("hidden");
+    } else {
+      setStatus("Walk close to the character or newspapers first.");
+    }
+    return;
+  }
+
+  if (nearbyRoomObject === "npc") {
+    if (isCustomIndoorRoomOpen()) {
+      roomInteractionHint.textContent = `Character: Welcome to ${activeWebRoomHouse.name}.`;
+      roomInteractionHint.classList.remove("hidden");
+    } else {
+      setStatus(`Character: Welcome to ${activeWebRoomHouse.name}. I can help you navigate this room.`);
+    }
+    return;
+  }
+
+  if (nearbyRoomObject === "newspapers") {
+    if (isCustomIndoorRoomOpen()) {
+      roomInteractionHint.textContent = "Newspapers: Headlines mention browsers and internet history.";
+      roomInteractionHint.classList.remove("hidden");
+    } else {
+      setStatus("Newspapers: Headlines mention browsers, open web standards, and internet history.");
+    }
+  }
+}
+
+function moveRoomAvatar(delta) {
+  if (!roomWalkArea || !roomAvatar) {
+    return;
+  }
+
+  let dx = 0;
+  let dy = 0;
+
+  if (roomKeys.has("arrowup") || roomKeys.has("w")) {
+    dy -= 1;
+  }
+  if (roomKeys.has("arrowdown") || roomKeys.has("s")) {
+    dy += 1;
+  }
+  if (roomKeys.has("arrowleft") || roomKeys.has("a")) {
+    dx -= 1;
+  }
+  if (roomKeys.has("arrowright") || roomKeys.has("d")) {
+    dx += 1;
+  }
+
+  const moving = dx !== 0 || dy !== 0;
+  const walkWidth = roomWalkArea.clientWidth;
+  const walkHeight = roomWalkArea.clientHeight;
+  const magnitude = Math.hypot(dx, dy) || 1;
+  const step = roomPlayer.speed * (delta / 16.666);
+
+  if (moving) {
+    roomPlayer.x = clamp(roomPlayer.x + (dx / magnitude) * step, 8, Math.max(8, walkWidth - roomPlayer.width - 8));
+    roomPlayer.y = clamp(roomPlayer.y + (dy / magnitude) * step, 8, Math.max(8, walkHeight - roomPlayer.height - 8));
+  }
+
+  updateRoomAvatarRender(moving);
+  updateRoomNearbyObject();
+}
+
+function updateRoomAvatarRender(moving) {
+  if (!roomAvatar) {
+    return;
+  }
+
+  roomAvatar.style.left = `${roomPlayer.x}px`;
+  roomAvatar.style.top = `${roomPlayer.y}px`;
+  roomAvatar.classList.toggle("walking", moving);
 }
 
 function updatePlayerRender() {
@@ -619,17 +800,34 @@ function openWebRoom(house) {
   webRoomSearchInput.value = "";
   webRoomSearchInput.placeholder = house.searchPlaceholder;
   webRoomExternalLink.href = house.url;
+  const useIndoorScene = isWebsiteShortcutHouse(house);
+  setWebRoomContentMode(useIndoorScene);
+  roomScene?.classList.toggle("hidden", !useIndoorScene);
   webRoom.classList.remove("hidden");
   webRoom.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  setStatus("Choose a prompt below or type into the room.");
+  if (useIndoorScene) {
+    resetRoomAvatar();
+    setStatus("");
+  } else {
+    roomKeys.clear();
+    nearbyRoomObject = null;
+    setRoomInteractionHint(null);
+    setStatus("Navigator room active. Use search below.");
+  }
   setDefaultWebRoomContent(house);
+  if (useIndoorScene) {
+    updateRoomNearbyObject();
+  }
   webRoomSearchInput.focus();
 }
 
 function closeWebRoom() {
   activeWebRoomHouse = null;
   keys.clear();
+  roomKeys.clear();
+  nearbyRoomObject = null;
+  setRoomInteractionHint(null);
   webRoom.classList.add("hidden");
   webRoom.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
@@ -637,6 +835,18 @@ function closeWebRoom() {
 
 function isWebRoomOpen() {
   return !webRoom.classList.contains("hidden");
+}
+
+function isCustomIndoorRoomOpen() {
+  return isWebRoomOpen() && isWebsiteShortcutHouse(activeWebRoomHouse);
+}
+
+function setWebRoomContentMode(useIndoorScene) {
+  webRoomDescription.classList.toggle("hidden", useIndoorScene);
+  webRoomSearchForm.classList.toggle("hidden", useIndoorScene);
+  webRoomActions?.classList.toggle("hidden", useIndoorScene);
+  webRoomStatus.classList.toggle("hidden", useIndoorScene);
+  webRoomResults.classList.toggle("hidden", useIndoorScene);
 }
 
 async function fetchJson(url) {
@@ -909,7 +1119,9 @@ function gameLoop(timestamp) {
   const delta = timestamp - (lastTimestamp || timestamp);
   lastTimestamp = timestamp;
 
-  if (!isWebRoomOpen()) {
+  if (isCustomIndoorRoomOpen()) {
+    moveRoomAvatar(delta);
+  } else {
     movePlayer(delta);
   }
   updatePlayerRender();
@@ -923,6 +1135,16 @@ window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
 
   if (isWebRoomOpen()) {
+    if (isCustomIndoorRoomOpen() && ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
+      event.preventDefault();
+      roomKeys.add(key);
+    }
+
+    if (isCustomIndoorRoomOpen() && key === "e") {
+      event.preventDefault();
+      interactWithRoomObject();
+    }
+
     if (key === "escape") {
       event.preventDefault();
       closeWebRoom();
@@ -955,7 +1177,9 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  keys.delete(event.key.toLowerCase());
+  const key = event.key.toLowerCase();
+  keys.delete(key);
+  roomKeys.delete(key);
 });
 
 enterRoomButton.addEventListener("click", () => {
@@ -966,8 +1190,6 @@ enterRoomButton.addEventListener("click", () => {
 
 toggleMapButton.addEventListener("click", toggleMap);
 closeMapButton.addEventListener("click", () => setMapOpen(false));
-
-closeWebRoomButton.addEventListener("click", closeWebRoom);
 
 webRoom.addEventListener("click", (event) => {
   if (event.target instanceof HTMLElement && event.target.dataset.closeWebRoom === "true") {
@@ -981,6 +1203,7 @@ webRoomSearchForm.addEventListener("submit", async (event) => {
 });
 
 updatePlayerRender();
+updateRoomAvatarRender(false);
 renderMapHouseMarkers();
 renderHouseBrowser();
 setPanelContent(null);
