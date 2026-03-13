@@ -308,6 +308,16 @@ export function createGameEngine(refs) {
   function updatePlayerRender() {
     refs.playerElement.style.left = `${state.player.x}px`;
     refs.playerElement.style.top = `${state.player.y}px`;
+
+    // Center the camera on the player
+    const viewWidth = window.innerWidth;
+    const viewHeight = window.innerHeight;
+    const scrollX = state.player.x + state.player.width / 2 - viewWidth / 2;
+    const scrollY = state.player.y + state.player.height / 2 - viewHeight / 2;
+
+    // Apply smooth camera transition via the world wrapper
+    // Note: This makes the map feel like it's rotating or moving under you
+    refs.world.style.transform = `translate(${-scrollX}px, ${-scrollY}px)`;
     updateMapPlayerMarker();
   }
 

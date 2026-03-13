@@ -1,6 +1,6 @@
 export const worldBounds = {
-  width: 1280,
-  height: 720,
+  width: 2560,
+  height: 1440,
 };
 
 export const baseHouse = {
@@ -23,16 +23,34 @@ export const baseHouse = {
   chips: ['open source browsers', 'web standards', 'example.com', 'internet history'],
   roomTip:
     'Paste a direct URL to open it immediately, or use a query to get multiple search routes.',
-  lot: { x: 165, y: 448, width: 210, height: 180 },
-  collision: { x: 201, y: 504, width: 138, height: 118 },
-  interactZone: { x: 187, y: 562, width: 166, height: 84 },
+  lot: { x: 300, y: 800, width: 210, height: 180 },
+  collision: { x: 336, y: 856, width: 138, height: 118 },
+  interactZone: { x: 322, y: 914, width: 166, height: 84 },
 };
 
 export const generatedLotSlots = [
-  { x: 390, y: 96, width: 210, height: 180 },
-  { x: 680, y: 96, width: 210, height: 180 },
-  { x: 390, y: 448, width: 210, height: 180 },
-  { x: 680, y: 448, width: 210, height: 180 },
+  // Top Row (Above the road at y=662)
+  { x: 300, y: 200, width: 210, height: 180 },
+  { x: 700, y: 200, width: 210, height: 180 },
+  { x: 1650, y: 200, width: 210, height: 180 },
+  { x: 2050, y: 200, width: 210, height: 180 },
+  
+  // Middle Row (Above the road)
+  { x: 300, y: 440, width: 210, height: 180 },
+  { x: 700, y: 440, width: 210, height: 180 },
+  { x: 1650, y: 440, width: 210, height: 180 },
+  { x: 2050, y: 440, width: 210, height: 180 },
+
+  // Bottom Row (Below the road)
+  { x: 700, y: 800, width: 210, height: 180 },
+  { x: 1650, y: 800, width: 210, height: 180 },
+  { x: 2050, y: 800, width: 210, height: 180 },
+  
+  // Far Bottom Row
+  { x: 300, y: 1040, width: 210, height: 180 },
+  { x: 700, y: 1040, width: 210, height: 180 },
+  { x: 1650, y: 1040, width: 210, height: 180 },
+  { x: 2050, y: 1040, width: 210, height: 180 },
 ];
 
 export const generatedHousePalettes = [

@@ -17,7 +17,7 @@ export default function App() {
             <div className="road road-vertical"></div>
             <div className="square"></div>
 
-            <div className="lot lot-browser">
+            <div className="lot lot-browser" style={{ left: '300px', top: '800px' }}>
               <div className="house house-browser" data-house-id="browser">
                 <div className="roof"></div>
                 <div className="body">

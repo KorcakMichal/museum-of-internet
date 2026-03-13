@@ -75,18 +75,18 @@ body {
   border-radius: 0;
   border: 0;
   box-shadow: none;
+  background: var(--grass-dark); /* Background color for when camera goes out of bounds */
 }
 
 .world {
   position: relative;
-  width: 1280px;
-  height: 720px;
+  width: 2560px;
+  height: 1440px;
   background:
     linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)) top / 100% 120px no-repeat,
     linear-gradient(90deg, transparent 0 49%, rgba(255, 255, 255, 0.08) 49% 51%, transparent 51%),
     linear-gradient(var(--grass) 0%, #96d97c 60%, #7cc165 100%);
 }
-
 
 .skyline {
   position: absolute;
@@ -118,7 +118,7 @@ body {
 }
 
 .road-horizontal {
-  top: 320px;
+  top: 662px;
   left: 0;
   right: 0;
   height: 116px;
@@ -145,7 +145,7 @@ body {
 
 .square {
   position: absolute;
-  top: 260px;
+  top: 610px;
   left: calc(50% - 110px);
   width: 220px;
   height: 220px;
@@ -165,9 +165,10 @@ body {
   height: 180px;
 }
 
+/* Base Browser House position (overridden by style prop in App.jsx if needed) */
 .lot-browser {
-  bottom: 92px;
-  left: 165px;
+  top: 800px;
+  left: 300px;
 }
 
 .house {

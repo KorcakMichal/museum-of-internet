@@ -25,8 +25,10 @@ export function createGameState() {
     keys: new Set(),
     roomKeys: new Set(),
     obstacles: [
+      // Top boundary
       { x: 0, y: 0, width: worldBounds.width, height: 70 },
-      { x: 0, y: 660, width: worldBounds.width, height: 60 },
+      // Bottom boundary
+      { x: 0, y: worldBounds.height - 60, width: worldBounds.width, height: 60 },
       ...houses.map((house) => house.collision),
     ],
     nearbyRoomObject: null,
