@@ -91,9 +91,11 @@ body {
 .skyline {
   position: absolute;
   inset: 0 0 auto;
-  height: 130px;
+  height: 220px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(circle at 50% -100px, rgba(255, 255, 255, 0.8), transparent 60% 100%);
+  pointer-events: none;
 }
 
 .road {
@@ -146,17 +148,32 @@ body {
 .square {
   position: absolute;
   top: 610px;
-  left: calc(50% - 110px);
-  width: 220px;
-  height: 220px;
-  background:
-    radial-gradient(circle at center, rgba(255, 251, 234, 0.3), transparent 55%),
-    linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25% 75%, rgba(0, 0, 0, 0.04) 75%),
-    linear-gradient(-45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25% 75%, rgba(0, 0, 0, 0.04) 75%),
-    var(--square);
-  background-size: auto, 28px 28px, 28px 28px, auto;
-  border-radius: 26px;
-  box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.15);
+  left: calc(50% - 63px);
+  width: 126px;
+  height: 116px;
+  background: var(--road);
+}
+
+.square::before,
+.square::after {
+  content: "";
+  position: absolute;
+  background-color: var(--road-line);
+}
+
+/* Vertical dashed line only */
+.square::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    180deg,
+    var(--road-line) 0 22px,
+    transparent 22px 44px
+  );
+  background-size: 8px 44px;
 }
 
 .lot {
