@@ -28,6 +28,10 @@ const requiredIds = [
   'closeMapButton',
   'mapHouseMarkers',
   'mapPlayerMarker',
+  'navigatorSearchForm',
+  'navigatorSearchInput',
+  'navigatorStatus',
+  'navigatorResults',
 ];
 
 export function getDomRefs(root = document) {
@@ -61,6 +65,10 @@ export function getDomRefs(root = document) {
     closeMapButton: root.getElementById('closeMapButton'),
     mapHouseMarkers: root.getElementById('mapHouseMarkers'),
     mapPlayerMarker: root.getElementById('mapPlayerMarker'),
+    navigatorSearchForm: root.getElementById('navigatorSearchForm'),
+    navigatorSearchInput: root.getElementById('navigatorSearchInput'),
+    navigatorStatus: root.getElementById('navigatorStatus'),
+    navigatorResults: root.getElementById('navigatorResults'),
   };
 
   refs.webRoomActions = refs.webRoom?.querySelector('.web-room-actions') ?? null;

@@ -17,18 +17,6 @@ export default function App() {
             <div className="road road-vertical"></div>
             <div className="square"></div>
 
-            <div className="lot lot-browser" style={{ left: '300px', top: '800px' }}>
-              <div className="house house-browser" data-house-id="browser">
-                <div className="roof"></div>
-                <div className="body">
-                  <div className="sign">Browser</div>
-                  <div className="door"></div>
-                  <div className="window left"></div>
-                  <div className="window right"></div>
-                </div>
-              </div>
-            </div>
-
             <div className="trees trees-top"></div>
             <div className="trees trees-bottom"></div>
 
@@ -45,20 +33,42 @@ export default function App() {
           <section id="mapOverlay" className="map-overlay hidden" aria-hidden="true" aria-label="Town map overview">
             <header className="map-overlay-header">
               <div>
-                <p className="panel-label">Town Navigator</p>
-                <h3>Map Overview</h3>
+                <p className="panel-label">Museum of Internet</p>
+                <h3>Town Navigator</h3>
               </div>
               <button id="closeMapButton" className="button button-secondary" type="button">
-                Close Map
+                Close
               </button>
             </header>
 
-            <div id="miniMap" className="mini-map" role="img" aria-label="Overview map with houses and player position">
-              <div id="mapHouseMarkers" className="map-house-markers"></div>
-              <div id="mapPlayerMarker" className="map-player-marker" aria-hidden="true"></div>
-            </div>
+            <div className="map-overlay-content">
+              <div id="miniMap" className="mini-map" role="img" aria-label="Overview map with houses and player position">
+                <div id="mapHouseMarkers" className="map-house-markers"></div>
+                <div id="mapPlayerMarker" className="map-player-marker" aria-hidden="true"></div>
+              </div>
 
-            <p className="map-overlay-hint">Press M to toggle this view while walking around.</p>
+              <aside className="navigator-form">
+                <p className="panel-label">Summon New House</p>
+                <form id="navigatorSearchForm" className="browser-search">
+                  <input
+                    id="navigatorSearchInput"
+                    type="text"
+                    name="query"
+                    autoComplete="off"
+                    placeholder="Type a URL or search query..."
+                  />
+                  <button className="button button-primary" type="submit">
+                    Summon
+                  </button>
+                </form>
+                <div id="navigatorStatus" className="status-text tiny"></div>
+                <div id="navigatorResults" className="navigator-results"></div>
+                
+                <p className="map-overlay-hint">
+                  The town expands as you search. Enter a website to build a house for it.
+                </p>
+              </aside>
+            </div>
           </section>
         </div>
 

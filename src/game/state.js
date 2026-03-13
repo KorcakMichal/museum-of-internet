@@ -1,10 +1,10 @@
-import { baseHouse, worldBounds } from './config';
+import { worldBounds } from './config';
 
 export function createGameState() {
-  const houses = [{ ...baseHouse }];
+  const houses = [];
   const player = {
-    x: 120,
-    y: 460,
+    x: 1280, // Start in center of new map
+    y: 720,
     width: 34,
     height: 46,
     speed: 3,

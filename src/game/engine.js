@@ -90,10 +90,16 @@ export function createGameEngine(refs) {
 
   function setStatus(message = '') {
     refs.webRoomStatus.textContent = message;
+    refs.navigatorStatus.textContent = message;
   }
 
   function setWebRoomResultsVisible(visible) {
     refs.webRoomResults.classList.toggle('hidden', !visible);
+    refs.navigatorResults.classList.toggle('hidden', !visible);
+  }
+
+  function getActiveResultsContainer() {
+    return state.isMapOpen ? refs.navigatorResults : refs.webRoomResults;
   }
 
   function clearElement(element) {
@@ -171,6 +177,8 @@ export function createGameEngine(refs) {
 
     if (open) {
       updateMapPlayerMarker();
+      refs.navigatorSearchInput.focus();
+      state.keys.clear(); // Stop player movement immediately when map opens
     }
   }
 
@@ -697,42 +705,42 @@ export function createGameEngine(refs) {
   }
 
   async function runBrowserSearch(query) {
-    clearElement(refs.webRoomResults);
+    const resultsContainer = getActiveResultsContainer();
+    clearElement(resultsContainer);
 
     if (looksLikeUrl(query)) {
       const creationResult = createHouseFromWebsiteUrl(query);
       if (!creationResult) {
         setStatus('That does not look like a valid website address.');
-        setDefaultWebRoomContent(state.activeWebRoomHouse);
+        if (state.activeWebRoomHouse) {
+          setDefaultWebRoomContent(state.activeWebRoomHouse);
+        }
         return;
       }
 
       const { website, houseResult } = creationResult;
 
-      refs.webRoomResults.appendChild(
+      resultsContainer.appendChild(
         makeCard({
           title: 'Direct URL detected',
-          description: 'Open this address directly from the navigator room and use the generated house in town.',
+          description: 'A new house has been summoned to the town for this address.',
           hero: true,
           actions: [
             makeLink('Open URL', website.url, 'button-primary'),
-            houseResult.house
-              ? makeButton('Focus House', () => {
-                setPanelContent(houseResult.house);
-              })
-              : makeButton('Back To Browser House', () => {
-                if (state.activeWebRoomHouse) {
-                  setPanelContent(state.activeWebRoomHouse);
-                }
-              }),
+            makeButton('Show on Map', () => {
+              if (houseResult.house) {
+                setStatus(`Focused ${houseResult.house.name} on map.`);
+              }
+            }),
           ],
         }),
       );
+      setWebRoomResultsVisible(true);
       return;
     }
 
     const encoded = encodeURIComponent(query);
-    setStatus(`Searching websites for "${query}" with a free API...`);
+    setStatus(`Searching websites for "${query}"...`);
 
     let apiResults = [];
     try {
@@ -747,54 +755,42 @@ export function createGameEngine(refs) {
     const websiteCandidates = buildWebsiteCandidates(query, apiResults);
 
     if (websiteCandidates.length === 0) {
-      refs.webRoomResults.appendChild(
+      resultsContainer.appendChild(
         makeCard({
           title: `No direct website matches for "${query}"`,
-          description: 'Try a more specific query or use a search route below.',
+          description: 'Try a direct URL or more specific query.',
+          hero: true,
+        }),
+      );
+      setStatus('No direct matches found.');
+    } else {
+      resultsContainer.appendChild(
+        makeCard({
+          title: `Possible webpages for "${query}"`,
+          description: 'Choose a website result and summon a house from it.',
           hero: true,
         }),
       );
 
-      setStatus('No direct website matches found.');
+      websiteCandidates.forEach((candidate) => {
+        resultsContainer.appendChild(
+          makeCard({
+            title: candidate.host,
+            description: candidate.description,
+            actions: [
+              makeLink('Open Website', candidate.url, 'button-primary'),
+              makeButton('Summon House', () => {
+                createHouseFromWebsiteUrl(candidate.url);
+              }),
+            ],
+          }),
+        );
+      });
 
-      refs.webRoomResults.appendChild(
-        makeCard({
-          title: 'Search Routes',
-          description: 'Use these routes to continue searching on the web.',
-          actions: [
-            makeLink('Open DuckDuckGo', `https://duckduckgo.com/?q=${encoded}`, 'button-primary'),
-            makeLink('Open Google', `https://www.google.com/search?q=${encoded}`),
-            makeLink('Open Wikipedia', `https://en.wikipedia.org/w/index.php?search=${encoded}`),
-          ],
-        }),
-      );
-      return;
+      setStatus(`Found ${websiteCandidates.length} possibilities.`);
     }
 
-    refs.webRoomResults.appendChild(
-      makeCard({
-        title: `Possible webpages for "${query}"`,
-        description: 'Choose a website result and optionally create a house from it.',
-        hero: true,
-      }),
-    );
-
-    websiteCandidates.forEach((candidate) => {
-      refs.webRoomResults.appendChild(
-        makeCard({
-          title: candidate.host,
-          description: candidate.description,
-          actions: [
-            makeLink('Open Website', candidate.url, 'button-primary'),
-            makeButton('Create House', () => {
-              createHouseFromWebsiteUrl(candidate.url);
-            }),
-          ],
-        }),
-      );
-    });
-
-    setStatus(`Found ${websiteCandidates.length} possible website${websiteCandidates.length === 1 ? '' : 's'}.`);
+    setWebRoomResultsVisible(true);
   }
 
   async function runWebsiteShortcutSearch(house) {
@@ -804,18 +800,23 @@ export function createGameEngine(refs) {
   }
 
   async function handleWebRoomSearch(query) {
-    if (!state.activeWebRoomHouse) {
-      return;
-    }
-
     if (!query.trim()) {
       setStatus('Type something first.');
-      setDefaultWebRoomContent(state.activeWebRoomHouse);
+      if (state.activeWebRoomHouse) {
+        setDefaultWebRoomContent(state.activeWebRoomHouse);
+      }
       return;
     }
 
     try {
       const trimmedQuery = query.trim();
+      
+      // If we are on the map (no house selected), we always treat it as a town navigator search
+      if (!state.activeWebRoomHouse) {
+        await runBrowserSearch(trimmedQuery);
+        return;
+      }
+
       const handlers = {
         browser: () => runBrowserSearch(trimmedQuery),
       };
@@ -834,7 +835,9 @@ export function createGameEngine(refs) {
       await runBrowserSearch(trimmedQuery);
     } catch {
       setStatus('That interaction failed. The external site links are still available.');
-      setDefaultWebRoomContent(state.activeWebRoomHouse);
+      if (state.activeWebRoomHouse) {
+        setDefaultWebRoomContent(state.activeWebRoomHouse);
+      }
     }
   }
 
@@ -868,6 +871,35 @@ export function createGameEngine(refs) {
 
   function onKeyDown(event) {
     const key = event.key.toLowerCase();
+    const isTyping = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement;
+
+    // Handle map toggle first because it's global
+    if (key === 'm') {
+      if (isTyping || state.isMapOpen || isWebRoomOpen()) {
+        return;
+      }
+      event.preventDefault();
+      toggleMap();
+      return;
+    }
+
+    if (key === 'escape') {
+      if (state.isMapOpen) {
+        event.preventDefault();
+        setMapOpen(false);
+        return;
+      }
+      if (isWebRoomOpen()) {
+        event.preventDefault();
+        closeWebRoom();
+        return;
+      }
+    }
+
+    // Stop here if we're typing or the map is distracting the player
+    if (isTyping || state.isMapOpen) {
+      return;
+    }
 
     if (isWebRoomOpen()) {
       if (isCustomIndoorRoomOpen() && movementKeys.includes(key)) {
@@ -879,28 +911,12 @@ export function createGameEngine(refs) {
         event.preventDefault();
         interactWithRoomObject();
       }
-
-      if (key === 'escape') {
-        event.preventDefault();
-        closeWebRoom();
-      }
       return;
     }
 
+    // Town movement and interaction
     if ([...movementKeys, 'e', ' '].includes(key)) {
       event.preventDefault();
-    }
-
-    if (key === 'm') {
-      event.preventDefault();
-      toggleMap();
-      return;
-    }
-
-    if (key === 'escape' && state.isMapOpen) {
-      event.preventDefault();
-      setMapOpen(false);
-      return;
     }
 
     if (key === 'e' && state.nearbyHouse) {
@@ -938,6 +954,11 @@ export function createGameEngine(refs) {
     await handleWebRoomSearch(refs.webRoomSearchInput.value);
   }
 
+  async function onNavigatorSubmit(event) {
+    event.preventDefault();
+    await handleWebRoomSearch(refs.navigatorSearchInput.value);
+  }
+
   function start() {
     updatePlayerRender();
     updateRoomAvatarRender(false);
@@ -953,6 +974,7 @@ export function createGameEngine(refs) {
     refs.closeMapButton.addEventListener('click', onCloseMapClick);
     refs.webRoom.addEventListener('click', onWebRoomClick);
     refs.webRoomSearchForm.addEventListener('submit', onWebRoomSubmit);
+    refs.navigatorSearchForm.addEventListener('submit', onNavigatorSubmit);
   }
 
   function stop() {
@@ -968,6 +990,7 @@ export function createGameEngine(refs) {
     refs.closeMapButton.removeEventListener('click', onCloseMapClick);
     refs.webRoom.removeEventListener('click', onWebRoomClick);
     refs.webRoomSearchForm.removeEventListener('submit', onWebRoomSubmit);
+    refs.navigatorSearchForm.removeEventListener('submit', onNavigatorSubmit);
     document.body.style.overflow = '';
   }
 
