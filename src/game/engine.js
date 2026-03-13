@@ -353,8 +353,7 @@ export function createGameEngine(refs) {
 
   function setWebRoomContentMode(useIndoorScene) {
     refs.webRoomDescription.classList.toggle("hidden", useIndoorScene);
-    refs.webRoomSearchForm.classList.toggle("hidden", useIndoorScene);
-    refs.webRoomActions?.classList.toggle("hidden", useIndoorScene);
+    refs.webRoomOpenButton?.classList.toggle("hidden", useIndoorScene);
     refs.webRoomStatus.classList.toggle("hidden", useIndoorScene);
     refs.webRoomResults.classList.toggle("hidden", useIndoorScene);
   }
@@ -374,8 +373,8 @@ export function createGameEngine(refs) {
       chip.className = "chip";
       chip.textContent = query;
       chip.addEventListener("click", () => {
-        refs.webRoomSearchInput.value = query;
-        refs.webRoomSearchForm.requestSubmit();
+        refs.navigatorSearchInput.value = query;
+        refs.navigatorSearchForm.requestSubmit();
       });
       row.appendChild(chip);
     });
@@ -433,9 +432,13 @@ export function createGameEngine(refs) {
     refs.webRoomLabel.textContent = house.roomMode || "Inside Website House";
     refs.webRoomTitle.textContent = house.name;
     refs.webRoomDescription.textContent = house.roomIntro;
-    refs.webRoomSearchInput.value = "";
-    refs.webRoomSearchInput.placeholder = house.searchPlaceholder;
-    refs.webRoomExternalLink.href = house.url;
+
+    if (house.url) {
+      refs.webRoomOpenButton.classList.remove("hidden");
+    } else {
+      refs.webRoomOpenButton.classList.add("hidden");
+    }
+
     const useIndoorScene = isWebsiteShortcutHouse(house);
     setWebRoomContentMode(useIndoorScene);
     refs.roomScene.classList.toggle("hidden", !useIndoorScene);
@@ -465,7 +468,6 @@ export function createGameEngine(refs) {
     if (useIndoorScene) {
       updateRoomNearbyObject();
     }
-    refs.webRoomSearchInput.focus();
   }
 
   function closeWebRoom() {
@@ -574,58 +576,6 @@ export function createGameEngine(refs) {
     }
 
     updateHouseBrowserState();
-  }
-
-  async function handleWebRoomSearch(query) {
-    if (!query.trim()) {
-      setStatus("Type something first.");
-      if (state.activeWebRoomHouse) {
-        setDefaultWebRoomContent(state.activeWebRoomHouse);
-      }
-      return;
-    }
-
-    try {
-      const trimmedQuery = query.trim();
-      
-      const searchContext = {
-        createHouseFromWebsiteUrl,
-        setStatus,
-        getActiveResultsContainer,
-        setWebRoomResultsVisible,
-        setDefaultWebRoomContent
-      };
-
-      // If we are on the map (no house selected), we always treat it as a town navigator search
-      if (!state.activeWebRoomHouse) {
-        await runBrowserSearch(state, refs, trimmedQuery, searchContext);
-        return;
-      }
-
-      const handlers = {
-        browser: () => runBrowserSearch(state, refs, trimmedQuery, searchContext),
-      };
-
-      const selectedHandler = handlers[state.activeWebRoomHouse.id];
-      if (selectedHandler) {
-        await selectedHandler();
-        return;
-      }
-
-      if (isWebsiteShortcutHouse(state.activeWebRoomHouse)) {
-        renderWebsiteShortcutRoom();
-        const host = getSiteHost(state.activeWebRoomHouse.url) || state.activeWebRoomHouse.url;
-        setStatus(`Website shortcut room active for ${host}.`);
-        return;
-      }
-
-      await runBrowserSearch(state, refs, trimmedQuery, searchContext);
-    } catch {
-      setStatus("That interaction failed. The external site links are still available.");
-      if (state.activeWebRoomHouse) {
-        setDefaultWebRoomContent(state.activeWebRoomHouse);
-      }
-    }
   }
 
   function updateCamera() {
@@ -739,14 +689,44 @@ export function createGameEngine(refs) {
     }
   }
 
-  async function onWebRoomSubmit(event) {
-    event.preventDefault();
-    await handleWebRoomSearch(refs.webRoomSearchInput.value);
+  function onWebRoomOpenClick() {
+    if (state.activeWebRoomHouse?.url) {
+      window.open(state.activeWebRoomHouse.url, "_blank", "noopener,noreferrer");
+    }
   }
 
   async function onNavigatorSubmit(event) {
     event.preventDefault();
     await handleWebRoomSearch(refs.navigatorSearchInput.value);
+  }
+
+  async function handleWebRoomSearch(query) {
+    if (!query.trim()) {
+      setStatus("Type something first.");
+      if (state.activeWebRoomHouse) {
+        setDefaultWebRoomContent(state.activeWebRoomHouse);
+      }
+      return;
+    }
+
+    try {
+      const trimmedQuery = query.trim();
+      
+      const searchContext = {
+        createHouseFromWebsiteUrl,
+        setStatus,
+        getActiveResultsContainer,
+        setWebRoomResultsVisible,
+        setDefaultWebRoomContent
+      };
+
+      await runBrowserSearch(state, refs, trimmedQuery, searchContext);
+    } catch {
+      setStatus("That interaction failed. The external site links are still available.");
+      if (state.activeWebRoomHouse) {
+        setDefaultWebRoomContent(state.activeWebRoomHouse);
+      }
+    }
   }
 
   function start() {
@@ -765,7 +745,7 @@ export function createGameEngine(refs) {
     refs.toggleMapButton.addEventListener("click", () => setMapOpen(state, refs, !state.isMapOpen));
     refs.closeMapButton.addEventListener("click", onCloseMapClick);
     refs.webRoom.addEventListener("click", onWebRoomClick);
-    refs.webRoomSearchForm.addEventListener("submit", onWebRoomSubmit);
+    refs.webRoomOpenButton.addEventListener("click", onWebRoomOpenClick);
     refs.navigatorSearchForm.addEventListener("submit", onNavigatorSubmit);
   }
 
@@ -818,7 +798,7 @@ export function createGameEngine(refs) {
     refs.toggleMapButton.removeEventListener("click", () => setMapOpen(state, refs, !state.isMapOpen));
     refs.closeMapButton.removeEventListener("click", onCloseMapClick);
     refs.webRoom.removeEventListener("click", onWebRoomClick);
-    refs.webRoomSearchForm.removeEventListener("submit", onWebRoomSubmit);
+    refs.webRoomOpenButton.removeEventListener("click", onWebRoomOpenClick);
     refs.navigatorSearchForm.removeEventListener("submit", onNavigatorSubmit);
     document.body.style.overflow = "";
   }

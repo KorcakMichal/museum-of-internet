@@ -148,23 +148,10 @@ export default function App() {
             </div>
           </section>
 
-          <form id="webRoomSearchForm" className="browser-search">
-            <input
-              id="webRoomSearchInput"
-              type="text"
-              name="query"
-              autoComplete="off"
-              placeholder="Type a search or URL"
-            />
-            <button className="button button-primary" type="submit">
-              Use
-            </button>
-          </form>
-
           <div className="web-room-actions">
-            <a id="webRoomExternalLink" className="button button-secondary" href="#" target="_blank" rel="noreferrer">
-              Open Real Site
-            </a>
+            <button id="webRoomOpenButton" className="button button-primary" type="button">
+              Visit Real Site
+            </button>
           </div>
 
           <div id="webRoomStatus" className="web-room-status" aria-live="polite"></div>
