@@ -12,12 +12,10 @@ const webRoom = document.getElementById("webRoom");
 const webRoomLabel = document.getElementById("webRoomLabel");
 const webRoomTitle = document.getElementById("webRoomTitle");
 const webRoomDescription = document.getElementById("webRoomDescription");
-const indoorGame = document.getElementById("indoorGame");
 const webRoomSearchForm = document.getElementById("webRoomSearchForm");
 const webRoomSearchInput = document.getElementById("webRoomSearchInput");
 const webRoomExternalLink = document.getElementById("webRoomExternalLink");
 const webRoomStatus = document.getElementById("webRoomStatus");
-const webRoomActions = document.querySelector(".web-room-actions");
 const webRoomResults = document.getElementById("webRoomResults");
 const closeWebRoomButton = document.getElementById("closeWebRoomButton");
 const mapOverlay = document.getElementById("mapOverlay");
@@ -153,15 +151,6 @@ function getWebsiteDisplayName(host) {
 
 function isWebsiteShortcutHouse(house) {
   return house?.interactionType === "website-shortcut";
-}
-
-function getHouseIndoorMeta(house) {
-  return window.houseIndoor?.getIndoorMeta?.(house) || {
-    label: "Inside Website House",
-    title: house?.name || "Web Room",
-    description: house?.roomIntro || "Enter a house to interact with the website from inside the game.",
-    status: "Choose a prompt below or type into the room.",
-  };
 }
 
 function getNextGeneratedLot() {
@@ -480,12 +469,6 @@ function setWebRoomResultsVisible(visible) {
   webRoomResults.classList.toggle("hidden", !visible);
 }
 
-function setWebRoomControlsVisible(visible) {
-  webRoomSearchForm.classList.toggle("hidden", !visible);
-  webRoomActions?.classList.toggle("hidden", !visible);
-  webRoomStatus.classList.toggle("hidden", !visible);
-}
-
 function makeButton(label, onClick, variant = "button-secondary") {
   const button = document.createElement("button");
   button.type = "button";
@@ -628,31 +611,25 @@ function openWebRoom(house) {
 
   setMapOpen(false);
   activeWebRoomHouse = house;
-  const indoorMeta = getHouseIndoorMeta(house);
   keys.clear();
   setPanelContent(house);
-  webRoomLabel.textContent = indoorMeta.label;
-  webRoomTitle.textContent = indoorMeta.title;
-  webRoomDescription.textContent = indoorMeta.description;
+  webRoomLabel.textContent = house.roomMode || "Inside Website House";
+  webRoomTitle.textContent = house.name;
+  webRoomDescription.textContent = house.roomIntro;
   webRoomSearchInput.value = "";
   webRoomSearchInput.placeholder = house.searchPlaceholder;
   webRoomExternalLink.href = house.url;
   webRoom.classList.remove("hidden");
   webRoom.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  const isShortcutHouse = isWebsiteShortcutHouse(house);
-  setStatus(indoorMeta.status);
-  setWebRoomControlsVisible(!isShortcutHouse);
-  setWebRoomResultsVisible(!isShortcutHouse);
-  window.houseIndoor?.mountGame?.(indoorGame, house);
+  setStatus("Choose a prompt below or type into the room.");
   setDefaultWebRoomContent(house);
-  window.houseIndoor?.focusGame?.();
+  webRoomSearchInput.focus();
 }
 
 function closeWebRoom() {
   activeWebRoomHouse = null;
   keys.clear();
-  window.houseIndoor?.unmountGame?.();
   webRoom.classList.add("hidden");
   webRoom.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
@@ -875,7 +852,7 @@ async function runBrowserSearch(query) {
 async function runWebsiteShortcutSearch(house) {
   renderWebsiteShortcutRoom(house);
   const host = getSiteHost(house.url) || house.url;
-  setStatus(`Indoor mode active for ${host}. Use the game area and Open Real Site button.`);
+  setStatus(`Website shortcut room active for ${host}.`);
 }
 
 async function handleWebRoomSearch(query) {
@@ -946,10 +923,6 @@ window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
 
   if (isWebRoomOpen()) {
-    const handledByIndoorGame = window.houseIndoor?.handleKeyDown?.(event);
-    if (handledByIndoorGame) {
-      event.preventDefault();
-    }
     if (key === "escape") {
       event.preventDefault();
       closeWebRoom();
@@ -982,12 +955,6 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  if (isWebRoomOpen()) {
-    const handledByIndoorGame = window.houseIndoor?.handleKeyUp?.(event);
-    if (handledByIndoorGame) {
-      event.preventDefault();
-    }
-  }
   keys.delete(event.key.toLowerCase());
 });
 

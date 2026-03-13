@@ -14,7 +14,6 @@ Small prototype where websites exist as houses in a walkable town.
 
 - Browser House is the core navigator room.
 - Searching URLs can create custom website houses in town.
-- Each house now opens an indoor walkable space.
 
 ## Houses included
 
