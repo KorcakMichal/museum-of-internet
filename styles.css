@@ -182,6 +182,12 @@ body {
   position: absolute;
   width: 210px;
   height: 180px;
+  /* Use z-index based on vertical position to allow player to walk behind/in front */
+}
+
+/* Ensure z-index is set correctly on the lot based on its top position */
+.lot[style*="top:"] {
+  z-index: auto; /* Will be set by inline style for depth sorting */
 }
 
 /* Base Browser House position (overridden by style prop in App.jsx if needed) */

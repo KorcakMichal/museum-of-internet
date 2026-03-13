@@ -15,6 +15,9 @@ export function canOccupy(state, x, y) {
 export function updatePlayerRender(state, refs) {
   refs.playerElement.style.left = `${state.player.x}px`;
   refs.playerElement.style.top = `${state.player.y}px`;
+  
+  // Pivot z-index around the player's feet for better overlapping
+  refs.playerElement.style.zIndex = Math.floor(state.player.y + state.player.height - 10);
 
   // Center the camera on the player
   const viewWidth = window.innerWidth;
