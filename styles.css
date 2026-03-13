@@ -347,6 +347,24 @@ body {
   image-rendering: crisp-edges;
 }
 
+.npc {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  z-index: 20;
+}
+
+.dns-grandma {
+  left: 1750px; /* Shifted from 1675px to move her to the side of the vertical road */
+  top: 610px;  /* Shifted from 700px to move her just above the horizontal road */
+  transform: none; /* Removed translateX(-50%) to make positioning more precise */
+}
+
+.dns-grandma .player-sprite {
+  background-image: url("/assets/npc/grandma/dnsgrandma.png");
+  transform: scaleX(-1);
+}
+
 .player.walking .player-sprite {
   animation: player-walk 2.4s steps(1) infinite;
 }

@@ -190,6 +190,8 @@ export function createGameEngine(refs) {
       url: website.url,
       interactionType: "website-shortcut",
       asset: assetPath,
+      npcAsset: "/assets/npc/grandma/dnsgrandma.png",
+      npcText: "DNS Grandma: Hello dear! Are you lost in the World Wide Web? I can help you find your way.",
       description: `A custom website house generated from ${website.host}.`,
       facts: [
         `Generated from: ${website.host}`,
@@ -320,11 +322,12 @@ export function createGameEngine(refs) {
     }
 
     if (state.nearbyRoomObject === "npc") {
+      const npcText = state.activeWebRoomHouse.npcText || `Character: Welcome to ${state.activeWebRoomHouse.name}.`;
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = `Character: Welcome to ${state.activeWebRoomHouse.name}.`;
+        refs.roomInteractionHint.textContent = npcText;
         refs.roomInteractionHint.classList.remove("hidden");
       } else {
-        setStatus(`Character: Welcome to ${state.activeWebRoomHouse.name}. I can help you navigate this room.`);
+        setStatus(`${npcText} I can help you navigate this room.`);
       }
       return;
     }
@@ -433,6 +436,14 @@ export function createGameEngine(refs) {
     const useIndoorScene = isWebsiteShortcutHouse(house);
     setWebRoomContentMode(useIndoorScene);
     refs.roomScene.classList.toggle("hidden", !useIndoorScene);
+
+    if (useIndoorScene) {
+      const npcSprite = refs.roomNpc.querySelector(".player-sprite");
+      if (npcSprite) {
+        npcSprite.style.backgroundImage = house.npcAsset ? `url(${house.npcAsset})` : "";
+      }
+    }
+
     refs.webRoom.classList.remove("hidden");
     refs.webRoom.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
@@ -519,6 +530,32 @@ export function createGameEngine(refs) {
 
   function updateNearbyHouse() {
     const playerBox = { x: state.player.x, y: state.player.y, width: state.player.width, height: state.player.height };
+    
+    // Check for Grandma interaction first
+    const grandmaBox = { 
+      x: refs.dnsGrandma.offsetLeft, 
+      y: refs.dnsGrandma.offsetTop, 
+      width: 64, 
+      height: 64 
+    };
+
+    const interactGrandmaZone = {
+      x: grandmaBox.x - 20,
+      y: grandmaBox.y - 20,
+      width: grandmaBox.width + 40,
+      height: grandmaBox.height + 60
+    };
+
+    if (intersects(playerBox, interactGrandmaZone)) {
+      state.nearbyHouse = null;
+      state.isNearbyGrandma = true;
+      refs.promptElement.textContent = "Press E to talk to DNS Grandma";
+      refs.promptElement.classList.remove("hidden");
+      updateHouseBrowserState();
+      return;
+    }
+
+    state.isNearbyGrandma = false;
     state.nearbyHouse = state.houses.find((house) => intersects(playerBox, house.interactZone)) || null;
 
     document.querySelectorAll(".house").forEach((element) => {
@@ -663,9 +700,15 @@ export function createGameEngine(refs) {
       event.preventDefault();
     }
 
-    if (key === "e" && state.nearbyHouse) {
-      openWebRoom(state.nearbyHouse);
-      return;
+    if (key === "e") {
+      if (state.isNearbyGrandma) {
+        setStatus("DNS Grandma: Welcome to the intersection of the World Wide Web, child! I'm here to make sure every name finds its home.");
+        return;
+      }
+      if (state.nearbyHouse) {
+        openWebRoom(state.nearbyHouse);
+        return;
+      }
     }
 
     state.keys.add(key);

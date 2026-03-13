@@ -24,6 +24,11 @@ export default function App() {
               <div className="player-shadow"></div>
               <div className="player-sprite"></div>
             </div>
+
+            <div id="dnsGrandma" className="npc dns-grandma" aria-label="DNS Grandma NPC">
+              <div className="player-shadow"></div>
+              <div className="player-sprite"></div>
+            </div>
           </div>
           <div id="interactionPrompt" className="interaction-prompt hidden" aria-live="polite"></div>
 
