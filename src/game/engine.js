@@ -772,18 +772,21 @@ export function createGameEngine(refs) {
     const grassCount = 150; // Increased from 60 to 150
 
     for (let i = 0; i < grassCount; i++) {
-      const x = Math.random() * (worldWidth - 50);
-      const y = Math.random() * (worldHeight - 50);
+      const size = 160;
+      const x = Math.random() * (worldWidth - size);
+      const y = Math.random() * (worldHeight - size);
 
-      // Avoid rendering on roads strictly
+      // Grass box (expanded slightly for safety)
+      const gBox = { x: x + 20, y: y + 20, width: size - 40, height: size - 40 };
+
       // Horizontal road: top 642, height 116
+      const hRoad = { x: 0, y: 642, width: worldWidth, height: 116 };
       // Vertical road: left 1675 (centered), width 126
-      // Grass is 160px wide/tall, so we need a larger offset (up to half the size)
-      const grassRadius = 80;
-      const isNearHorizontalRoad = (y + grassRadius) > 642 && (y + grassRadius) < (642 + 116);
-      const isNearVerticalRoad = (x + grassRadius) > (1675 - 63) && (x + grassRadius) < (1675 + 63);
+      const vRoad = { x: 1675 - 63, y: 150, width: 126, height: worldHeight - 150 };
 
-      if (isNearHorizontalRoad || isNearVerticalRoad) continue;
+      if (intersects(gBox, hRoad) || intersects(gBox, vRoad)) {
+        continue;
+      }
 
       const grass = document.createElement("div");
       grass.className = "grass-tuft";
