@@ -747,6 +747,7 @@ export function createGameEngine(refs) {
   }
 
   function start() {
+    renderGrass();
     updatePlayerRender(state, refs);
     updateRoomAvatarRender(false);
     renderPlaceholderHouses();
@@ -763,6 +764,40 @@ export function createGameEngine(refs) {
     refs.webRoom.addEventListener("click", onWebRoomClick);
     refs.webRoomSearchForm.addEventListener("submit", onWebRoomSubmit);
     refs.navigatorSearchForm.addEventListener("submit", onNavigatorSubmit);
+  }
+
+  function renderGrass() {
+    const worldWidth = 4000;
+    const worldHeight = 2500;
+    const grassCount = 150; // Increased from 60 to 150
+
+    for (let i = 0; i < grassCount; i++) {
+      const x = Math.random() * (worldWidth - 50);
+      const y = Math.random() * (worldHeight - 50);
+
+      // Avoid rendering on roads strictly
+      // Horizontal road: top 642, height 116
+      // Vertical road: left 1675 (centered), width 126
+      // Grass is 160px wide/tall, so we need a larger offset (up to half the size)
+      const grassRadius = 80;
+      const isNearHorizontalRoad = (y + grassRadius) > 642 && (y + grassRadius) < (642 + 116);
+      const isNearVerticalRoad = (x + grassRadius) > (1675 - 63) && (x + grassRadius) < (1675 + 63);
+
+      if (isNearHorizontalRoad || isNearVerticalRoad) continue;
+
+      const grass = document.createElement("div");
+      grass.className = "grass-tuft";
+      grass.style.left = `${x}px`;
+      grass.style.top = `${y}px`;
+      grass.style.zIndex = Math.floor(y);
+      
+      // Randomly flip or scale slightly
+      const scale = 0.8 + Math.random() * 0.4;
+      const flip = Math.random() > 0.5 ? -1 : 1;
+      grass.style.transform = `scale(${scale}, ${scale}) scaleX(${flip})`;
+
+      refs.world.appendChild(grass);
+    }
   }
 
   function stop() {

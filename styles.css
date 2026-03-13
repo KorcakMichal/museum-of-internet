@@ -5,8 +5,8 @@
   --muted: #5b6475;
   --panel: rgba(255, 250, 241, 0.88);
   --panel-border: rgba(31, 36, 48, 0.1);
-  --grass: #8ecf74;
-  --grass-dark: #66a54d;
+  --grass: #5d9e48;
+  --grass-dark: #3e732d;
   --road: #4d515a;
   --road-line: #fff3c3;
   --square: #c6905b;
@@ -226,6 +226,19 @@ body {
 
 .asset-sign {
   top: -24px !important;
+}
+
+.grass-tuft {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  background-image: url("/assets/grass.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  opacity: 0.8;
 }
 
 .roof {
