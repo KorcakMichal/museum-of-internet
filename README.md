@@ -22,9 +22,31 @@ Small prototype where websites exist as houses in a walkable town.
 
 ## Run
 
-You can open `index.html` directly in a browser.
+Use the React development server:
 
-If you want a local server instead, use any static server, for example VS Code Live Server.
+```bash
+npm install
+npm run dev
+```
+
+Build and preview production output:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Project Structure
+
+- `src/App.jsx`: React UI shell for game DOM.
+- `src/main.jsx`: React app bootstrap.
+- `src/game/index.js`: game init entrypoint used by React lifecycle.
+- `src/game/dom.js`: DOM reference collection and validation.
+- `src/game/state.js`: mutable game state factory.
+- `src/game/config.js`: constants and base house configuration.
+- `src/game/utils.js`: utility functions (math, URL parsing, API helpers).
+- `src/game/engine.js`: core game loop, movement, map, room, and search behavior.
+- `game.js`: compatibility shim that forwards to modular implementation.
 
 ## Next good additions
 
