@@ -79,8 +79,12 @@ export function createGameEngine(refs) {
   // --- World & House Management ---
 
   function renderHouseInWorld(house, palette) {
-    if (refs.world.querySelector(`[data-house-id="${house.id}"]`)) {
-      return;
+    const existing = refs.world.querySelector(`[data-house-id="${house.id}"]`);
+    if (existing) {
+      if (house.placeholder) {
+        return;
+      }
+      existing.remove(); // Replace placeholder with real house
     }
 
     const lot = document.createElement("div");
@@ -90,6 +94,9 @@ export function createGameEngine(refs) {
 
     const houseElement = document.createElement("div");
     houseElement.className = "house house-browser";
+    if (house.placeholder) {
+      houseElement.classList.add("placeholder-house");
+    }
     houseElement.dataset.houseId = house.id;
 
     if (house.asset) {
@@ -105,14 +112,14 @@ export function createGameEngine(refs) {
       houseElement.innerHTML = `
         <div class="roof"></div>
         <div class="body">
-          <div class="sign">${bodyName}</div>
+          ${house.placeholder ? "" : `<div class="sign">${bodyName}</div>`}
           <div class="door"></div>
           <div class="window left"></div>
           <div class="window right"></div>
         </div>
       `;
     } else {
-      houseElement.innerHTML = `<div class="sign asset-sign">${bodyName}</div>`;
+      houseElement.innerHTML = house.placeholder ? "" : `<div class="sign asset-sign">${bodyName}</div>`;
     }
 
     lot.appendChild(houseElement);
@@ -123,6 +130,34 @@ export function createGameEngine(refs) {
     } else {
       refs.world.appendChild(lot);
     }
+  }
+
+  function renderPlaceholderHouses() {
+    generatedLotSlots.forEach((lot, index) => {
+      // Choose an asset variant for the placeholder
+      const houseColors = ["cervene", "modre", "zelene"];
+      const color = houseColors[index % houseColors.length];
+      const assetIndex = Math.floor(index / houseColors.length) % 8;
+      const assetPath = `/assets/houses/sprite_domecky${color}${assetIndex}.png`;
+
+      const id = `placeholder-${index}`;
+      const placeholderHouse = {
+        id,
+        name: "Vacant Lot",
+        placeholder: true,
+        asset: assetPath,
+        lot,
+        collision: {
+          x: lot.x + 20,
+          y: lot.y + 60,
+          width: 170,
+          height: 110,
+        },
+      };
+
+      state.obstacles.push(placeholderHouse.collision);
+      renderHouseInWorld(placeholderHouse);
+    });
   }
 
   function createWebsiteHouse(website) {
@@ -669,6 +704,7 @@ export function createGameEngine(refs) {
   function start() {
     updatePlayerRender(state, refs);
     updateRoomAvatarRender(false);
+    renderPlaceholderHouses();
     renderMapHouseMarkers(state, refs, setPanelContent);
     renderHouseBrowser();
     setPanelContent(null);

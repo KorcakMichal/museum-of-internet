@@ -1,32 +1,58 @@
 export const worldBounds = {
-  width: 2560,
-  height: 1440,
+  width: 4000,
+  height: 2500,
 };
 
-export const generatedLotSlots = [
-  // Top Row (Above the road at y=662)
-  { x: 300, y: 200, width: 210, height: 180 },
-  { x: 700, y: 200, width: 210, height: 180 },
-  { x: 1650, y: 200, width: 210, height: 180 },
-  { x: 2050, y: 200, width: 210, height: 180 },
-  
-  // Middle Row (Above the road)
-  { x: 300, y: 440, width: 210, height: 180 },
-  { x: 700, y: 440, width: 210, height: 180 },
-  { x: 1650, y: 440, width: 210, height: 180 },
-  { x: 2050, y: 440, width: 210, height: 180 },
+export const gridConfig = {
+  startX: 300,
+  startY: 150,
+  cellWidth: 250,
+  cellHeight: 220,
+  columns: 10,
+  rows: 8,
+  roadY: 150 + (220 * 2.5) - (116 / 2), // Exactly centered in the middle of cell row 3
+  roadHeight: 116,
+};
 
-  // Bottom Row (Below the road)
-  { x: 700, y: 800, width: 210, height: 180 },
-  { x: 1650, y: 800, width: 210, height: 180 },
-  { x: 2050, y: 800, width: 210, height: 180 },
+function generateSlots() {
+  const slots = [];
+  const { startX, startY, cellWidth, cellHeight, columns, rows, roadY, roadHeight } = gridConfig;
+
+  // Road definitions
+  const hRoadTop = roadY;
+  const hRoadBottom = roadY + roadHeight;
   
-  // Far Bottom Row
-  { x: 300, y: 1040, width: 210, height: 180 },
-  { x: 700, y: 1040, width: 210, height: 180 },
-  { x: 1650, y: 1040, width: 210, height: 180 },
-  { x: 2050, y: 1040, width: 210, height: 180 },
-];
+  // Vertical road centered in column 6 (zero-indexed 5)
+  const vRoadCenter = startX + (5.5 * cellWidth);
+  const vRoadWidth = 126;
+  const vRoadLeft = vRoadCenter - (vRoadWidth / 2);
+  const vRoadRight = vRoadCenter + (vRoadWidth / 2);
+
+  for (let row = 0; row < rows; row++) {
+    const y = startY + row * cellHeight;
+    const cellCenterY = y + (cellHeight / 2);
+
+    // Skip row if its center is inside the horizontal road
+    if (cellCenterY > hRoadTop && cellCenterY < hRoadBottom) {
+      continue;
+    }
+
+    for (let col = 0; col < columns; col++) {
+      const x = startX + col * cellWidth;
+      const cellCenterX = x + (cellWidth / 2);
+
+      // Skip cell if its center is inside the vertical road
+      if (cellCenterX > vRoadLeft && cellCenterX < vRoadRight) {
+        continue;
+      }
+
+      slots.push({ x, y, width: cellWidth, height: cellHeight });
+    }
+  }
+  return slots;
+}
+
+export const generatedLotSlots = generateSlots();
 
 export const generatedHousePalettes = [
   { roof: '#2b4f7f', body: '#deecff' },
