@@ -1,6 +1,6 @@
 # Museum of Internet
 
-Small prototype where websites exist as houses in a walkable town.
+Small prototype where websites exist as houses in a walkable town..
 
 ## Current prototype
 
