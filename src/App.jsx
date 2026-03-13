@@ -119,12 +119,12 @@ export default function App() {
                 <div className="player-sprite"></div>
               </div>
 
-              <div id="roomNpc" className="room-npc room-object" aria-hidden="true">
+              <div id="roomNpc" className="room-npc room-object hidden" aria-hidden="true">
                 <div className="player-shadow"></div>
                 <div className="player-sprite"></div>
               </div>
 
-              <div id="roomNewspapers" className="room-newspapers room-object" aria-hidden="true">
+              <div id="roomNewspapers" className="room-newspapers room-object hidden" aria-hidden="true">
                 <span className="paper p1"></span>
                 <span className="paper p2"></span>
                 <span className="paper p3"></span>

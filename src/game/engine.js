@@ -280,12 +280,15 @@ export function createGameEngine(refs) {
     const npcBox = getRoomObjectBox(refs.roomNpc);
     const newspapersBox = getRoomObjectBox(refs.roomNewspapers);
 
-    refs.roomNpc.classList.toggle("nearby", Boolean(npcBox && intersects(checkArea, npcBox)));
-    refs.roomNewspapers.classList.toggle("nearby", Boolean(newspapersBox && intersects(checkArea, newspapersBox)));
+    const npcVisible = refs.roomNpc && !refs.roomNpc.classList.contains("hidden");
+    const newspapersVisible = refs.roomNewspapers && !refs.roomNewspapers.classList.contains("hidden");
 
-    if (npcBox && intersects(checkArea, npcBox)) {
+    if (refs.roomNpc) refs.roomNpc.classList.toggle("nearby", Boolean(npcVisible && npcBox && intersects(checkArea, npcBox)));
+    if (refs.roomNewspapers) refs.roomNewspapers.classList.toggle("nearby", Boolean(newspapersVisible && newspapersBox && intersects(checkArea, newspapersBox)));
+
+    if (npcVisible && npcBox && intersects(checkArea, npcBox)) {
       state.nearbyRoomObject = "npc";
-    } else if (newspapersBox && intersects(checkArea, newspapersBox)) {
+    } else if (newspapersVisible && newspapersBox && intersects(checkArea, newspapersBox)) {
       state.nearbyRoomObject = "newspapers";
     } else {
       state.nearbyRoomObject = null;
@@ -305,8 +308,8 @@ export function createGameEngine(refs) {
     state.roomPlayer.y = 150;
     state.nearbyRoomObject = null;
     setRoomInteractionHint(null);
-    refs.roomNpc.classList.remove("nearby");
-    refs.roomNewspapers.classList.remove("nearby");
+    if (refs.roomNpc) refs.roomNpc.classList.remove("nearby");
+    if (refs.roomNewspapers) refs.roomNewspapers.classList.remove("nearby");
     updateRoomAvatarRender(false);
   }
 
