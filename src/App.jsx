@@ -63,10 +63,6 @@ export default function App() {
                 </form>
                 <div id="navigatorStatus" className="status-text tiny"></div>
                 <div id="navigatorResults" className="navigator-results"></div>
-                
-                <p className="map-overlay-hint">
-                  The town expands as you search. Enter a website to build a house for it.
-                </p>
               </aside>
             </div>
           </section>

@@ -91,19 +91,29 @@ export function createGameEngine(refs) {
     const houseElement = document.createElement("div");
     houseElement.className = "house house-browser";
     houseElement.dataset.houseId = house.id;
-    houseElement.style.setProperty("--house-roof", palette.roof);
-    houseElement.style.setProperty("--house-body", palette.body);
+
+    if (house.asset) {
+      houseElement.classList.add("asset-house");
+      houseElement.style.backgroundImage = `url(${house.asset})`;
+    } else {
+      houseElement.style.setProperty("--house-roof", palette.roof);
+      houseElement.style.setProperty("--house-body", palette.body);
+    }
 
     const bodyName = house.name.replace(" House", "");
-    houseElement.innerHTML = `
-      <div class="roof"></div>
-      <div class="body">
-        <div class="sign">${bodyName}</div>
-        <div class="door"></div>
-        <div class="window left"></div>
-        <div class="window right"></div>
-      </div>
-    `;
+    if (!house.asset) {
+      houseElement.innerHTML = `
+        <div class="roof"></div>
+        <div class="body">
+          <div class="sign">${bodyName}</div>
+          <div class="door"></div>
+          <div class="window left"></div>
+          <div class="window right"></div>
+        </div>
+      `;
+    } else {
+      houseElement.innerHTML = `<div class="sign asset-sign">${bodyName}</div>`;
+    }
 
     lot.appendChild(houseElement);
 
@@ -127,6 +137,11 @@ export function createGameEngine(refs) {
     }
 
     state.generatedHouseCount += 1;
+    const houseColors = ["cervene", "modre", "zelene"];
+    const color = houseColors[(state.generatedHouseCount - 1) % houseColors.length];
+    const assetIndex = Math.floor((state.generatedHouseCount - 1) / houseColors.length) % 8;
+    const assetPath = `/assets/houses/sprite_domecky${color}${assetIndex}.png`;
+
     const palette = generatedHousePalettes[(state.generatedHouseCount - 1) % generatedHousePalettes.length];
     const displayName = getWebsiteDisplayName(website.host);
     const idSafeName = displayName.replace(/[^a-z0-9-]/g, "-");
@@ -137,6 +152,7 @@ export function createGameEngine(refs) {
       name: `${displayName} House`,
       url: website.url,
       interactionType: "website-shortcut",
+      asset: assetPath,
       description: `A custom website house generated from ${website.host}.`,
       facts: [
         `Generated from: ${website.host}`,
@@ -152,16 +168,16 @@ export function createGameEngine(refs) {
       roomTip: "You can keep generating houses from Browser House by searching more websites.",
       lot,
       collision: {
-        x: lot.x + 36,
-        y: lot.y + 56,
-        width: 138,
-        height: 118,
+        x: lot.x + 20,
+        y: lot.y + 60,
+        width: 170,
+        height: 110,
       },
       interactZone: {
-        x: lot.x + 22,
-        y: lot.y + 114,
-        width: 166,
-        height: 84,
+        x: lot.x + 10,
+        y: lot.y + 110,
+        width: 190,
+        height: 70,
       },
     };
 

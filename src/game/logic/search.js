@@ -24,22 +24,7 @@ export async function runBrowserSearch(state, refs, query, { createHouseFromWebs
 
     const { website, houseResult } = creationResult;
 
-    resultsContainer.appendChild(
-      makeCard({
-        title: 'Direct URL detected',
-        description: 'A new house has been summoned to the town for this address.',
-        hero: true,
-        actions: [
-          makeLink('Open URL', website.url, 'button-primary'),
-          makeButton('Show on Map', () => {
-            if (houseResult.house) {
-              setStatus(`Focused ${houseResult.house.name} on map.`);
-            }
-          }),
-        ],
-      }),
-    );
-    setWebRoomResultsVisible(true);
+    setWebRoomResultsVisible(false);
     return;
   }
 
