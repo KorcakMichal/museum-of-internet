@@ -10,8 +10,6 @@ const visitLink = document.getElementById("visitLink");
 const toggleMapButton = document.getElementById("toggleMapButton");
 const webRoom = document.getElementById("webRoom");
 const webRoomTitle = document.getElementById("webRoomTitle");
-const webRoomMode = document.getElementById("webRoomMode");
-const webRoomAddress = document.getElementById("webRoomAddress");
 const webRoomDescription = document.getElementById("webRoomDescription");
 const webRoomSearchForm = document.getElementById("webRoomSearchForm");
 const webRoomSearchInput = document.getElementById("webRoomSearchInput");
@@ -649,8 +647,6 @@ function openWebRoom(house) {
   keys.clear();
   setPanelContent(house);
   webRoomTitle.textContent = house.name;
-  webRoomMode.textContent = house.roomMode;
-  webRoomAddress.textContent = house.roomAddress;
   webRoomDescription.textContent = house.roomIntro;
   webRoomSearchInput.value = "";
   webRoomSearchInput.placeholder = house.searchPlaceholder;

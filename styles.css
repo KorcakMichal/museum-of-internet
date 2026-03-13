@@ -94,10 +94,14 @@ body {
 
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   max-width: 1380px;
   margin: 0 auto;
+}
+
+#infoPanel {
+  display: none;
 }
 
 .world-frame {
