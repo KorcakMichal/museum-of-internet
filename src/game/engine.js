@@ -152,13 +152,16 @@ export function createGameEngine(refs) {
     }
   }
 
+  function pickRandomHouseAsset() {
+    const houseColors = ["cervene", "modre", "zelene"];
+    const color = houseColors[Math.floor(Math.random() * houseColors.length)];
+    const assetIndex = Math.floor(Math.random() * 8);
+    return `/assets/houses/sprite_domecky${color}${assetIndex}.png`;
+  }
+
   function renderPlaceholderHouses() {
     generatedLotSlots.forEach((lot, index) => {
-      // Choose an asset variant for the placeholder
-      const houseColors = ["cervene", "modre", "zelene"];
-      const color = houseColors[index % houseColors.length];
-      const assetIndex = Math.floor(index / houseColors.length) % 8;
-      const assetPath = `/assets/houses/sprite_domecky${color}${assetIndex}.png`;
+      const assetPath = pickRandomHouseAsset();
 
       const id = `placeholder-${index}`;
       const placeholderHouse = {
@@ -192,10 +195,7 @@ export function createGameEngine(refs) {
     }
 
     state.generatedHouseCount += 1;
-    const houseColors = ["cervene", "modre", "zelene"];
-    const color = houseColors[(state.generatedHouseCount - 1) % houseColors.length];
-    const assetIndex = Math.floor((state.generatedHouseCount - 1) / houseColors.length) % 8;
-    const assetPath = `/assets/houses/sprite_domecky${color}${assetIndex}.png`;
+    const assetPath = pickRandomHouseAsset();
 
     const palette = generatedHousePalettes[(state.generatedHouseCount - 1) % generatedHousePalettes.length];
     const displayName = getWebsiteDisplayName(website.host);
