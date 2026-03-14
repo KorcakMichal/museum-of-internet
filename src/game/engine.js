@@ -94,8 +94,8 @@ export function createGameEngine(refs) {
     lot.className = "lot";
     lot.style.left = `${house.lot.x}px`;
     lot.style.top = `${house.lot.y}px`;
-    // Depth sorting updated to use the base of the building
-    lot.style.zIndex = Math.floor(house.lot.y + house.lot.height - 20);
+    // Depth sorting anchored to the visual base of the building (collision bottom)
+    lot.style.zIndex = Math.floor(house.lot.y + house.lot.height - 70);
 
     const houseElement = document.createElement("div");
     houseElement.className = "house house-browser";
@@ -153,10 +153,10 @@ export function createGameEngine(refs) {
         asset: assetPath,
         lot,
         collision: {
-          x: lot.x + 40, // Increased margin from left
-          y: lot.y + 130, // Block only the very bottom
-          width: lot.width - 110, // Narrower hit box
-          height: 40,
+          x: lot.x + 20,
+          y: lot.y + 60,
+          width: 150,
+          height: 90,
         },
       };
 
@@ -212,8 +212,8 @@ export function createGameEngine(refs) {
       collision: {
         x: lot.x + 20,
         y: lot.y + 60,
-        width: 170,
-        height: 110,
+        width: 150,
+        height: 90,
       },
       interactZone: {
         x: lot.x + 10,
