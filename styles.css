@@ -77,10 +77,37 @@ body {
 .welcome-card h1 {
   margin: 0;
   max-width: 10ch;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Tiny5", "Pixelify Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
   font-size: clamp(3rem, 7vw, 5.8rem);
-  line-height: 0.92;
+  line-height: 0.98;
+  letter-spacing: 0.02em;
   color: #2e2a24;
+}
+
+.welcome-locale-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.welcome-locale-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-locale-btn {
+  min-width: 56px;
+  padding: 10px 12px;
+}
+
+.welcome-locale-btn.active {
+  background: #1f2430;
+  color: #fffaef;
+  border-color: rgba(31, 36, 48, 0.2);
 }
 
 .welcome-intro {
@@ -950,7 +977,10 @@ body {
 
 .web-room-header h2 {
   margin: 0;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Tiny5", "Pixelify Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.02em;
   font-size: clamp(1.8rem, 3vw, 3rem);
 }
 

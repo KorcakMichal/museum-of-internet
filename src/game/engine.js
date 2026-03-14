@@ -18,7 +18,22 @@ import { generateIdeas } from "./services/idea-generator";
 import { getDomainSummary } from "./services/domain-summary";
 import { getNpcAnswer } from "./services/npc-answer";
 
-export function createGameEngine(refs) {
+export function createGameEngine(refs, options = {}) {
+  const locale = options?.locale === "cs" ? "cs" : "en";
+  const chatStrings = locale === "cs"
+    ? {
+        greeting: "No konecne. Zeptej se a nezdrzuj.",
+        thinking: "Hm... premyslim.",
+        emptyFallback: "Ted ne. Zeptej se znovu, pokud to fakt potrebujes.",
+        answerFallback: "Jdi k domu a stiskni E pro vstup. Kdyz bloudis, otevri mapu klavesou M.",
+      }
+    : {
+        greeting: "Oh, you again. Ask your question and make it quick.",
+        thinking: "Hmph... thinking.",
+        emptyFallback: "Not now. Ask again if you really need help.",
+        answerFallback: "Walk up to a house and press E to enter. Open the map with M if you need direction.",
+      };
+
   const state = createGameState();
   const indoorBackdropCache = new Map();
   const indoorIdeaCache = new Map();
@@ -84,6 +99,7 @@ export function createGameEngine(refs) {
       return await getNpcAnswer({
         npcName: "DNS Grandma",
         playerMessage,
+        locale,
         context: {
           nearbyHouse: state.nearbyHouse
             ? {
@@ -100,7 +116,7 @@ export function createGameEngine(refs) {
       }
 
       console.warn("[NPC] DNS Grandma answer failed", error);
-      return "Walk up to a house and press E to enter. Open the map with M if you need direction.";
+      return chatStrings.answerFallback;
     } finally {
       if (activeNpcAnswerController === controller) {
         activeNpcAnswerController = null;
@@ -161,7 +177,7 @@ export function createGameEngine(refs) {
     document.body.style.overflow = "hidden";
 
     if (!refs.grandmaChatMessages.children.length) {
-      appendGrandmaChatMessage("grandma", "Oh, you again. Ask your question and make it quick.");
+      appendGrandmaChatMessage("grandma", chatStrings.greeting);
     }
 
     refs.grandmaChatInput.focus();
@@ -189,14 +205,14 @@ export function createGameEngine(refs) {
 
     refs.grandmaChatInput.value = "";
     appendGrandmaChatMessage("player", question);
-    const pendingMessage = appendGrandmaChatMessage("grandma", "Hmph... thinking.");
+    const pendingMessage = appendGrandmaChatMessage("grandma", chatStrings.thinking);
 
     const answer = await answerWithDnsGrandma(question);
     if (!isGrandmaChatOpen()) {
       return;
     }
 
-    pendingMessage.textContent = answer || "Not now. Ask again if you really need help.";
+    pendingMessage.textContent = answer || chatStrings.emptyFallback;
   }
 
   function setWebRoomResultsVisible(visible) {

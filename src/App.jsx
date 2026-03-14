@@ -1,6 +1,95 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { initMuseumGame } from './game';
 
+const welcomeTranslations = {
+  en: {
+    welcomeAria: 'Welcome page',
+    museumLabel: 'Museum of Internet',
+    title: 'Website Shortcut Room',
+    intro:
+      'Step into a vintage town where each house opens a piece of the web. Wander the streets, summon new sites, and explore internet places as pixel rooms.',
+    enterMuseum: 'Enter Museum',
+    languageLabel: 'Language',
+    howToPlayLabel: 'How To Play',
+    walkTownTitle: 'Walk The Town',
+    walkTownText: 'Move with WASD or arrow keys and approach houses to discover websites placed around the square.',
+    discoverLabel: 'Discover',
+    openWebRoomsTitle: 'Open Web Rooms',
+    openWebRoomsText:
+      'Press E near a house to enter. Custom website houses become stylized interiors inspired by the linked website, while base town houses are not interactable.',
+    createLabel: 'Create',
+    summonTitle: 'Summon New Houses',
+    summonText: 'Use the browser house to add more sites to the map and let their interiors generate in the background.',
+    summonImageAlt: 'Preview of summoning a new website house',
+    mapAria: 'Town map overview',
+    mapTitle: 'Town Navigator',
+    close: 'Close',
+    summonMapLabel: 'Summon New House',
+    summonPlaceholder: 'Type a URL or search query...',
+    summonButton: 'Summon',
+    nearbyLabel: 'Nearby',
+    panelTitle: 'Town Square',
+    panelDescription: 'Walk up to a house and press E. Each building represents a real place on the internet.',
+    openWebRoom: 'Open Web Room',
+    visitWebsite: 'Visit Website',
+    showMap: 'Show Map',
+    houseBrowser: 'House Browser',
+    browserFact: 'Browser House: a general web navigator room.',
+    webRoomLabel: 'Inside Website House',
+    webRoomTitle: 'Web Room',
+    webRoomDescription: 'Enter a house to interact with the website from inside the game.',
+    webRoomVisitSite: 'Visit Real Site',
+    npcChatLabel: 'NPC Chat',
+    grandmaTitle: 'DNS Grandma',
+    grandmaDescription: 'Ask anything about moving around town, opening houses, and using map controls.',
+    grandmaPlaceholder: 'Ask DNS Grandma what to do next...',
+    send: 'Send',
+  },
+  cs: {
+    welcomeAria: 'Uvítací stránka',
+    museumLabel: 'Muzeum Internetu',
+    title: 'Místnost Webových Zkratek',
+    intro:
+      'Vstup do retro městečka, kde každý dům otevírá část webu. Procházej ulicemi, vyvolej nové weby a objevuj internetová místa jako pixelové místnosti.',
+    enterMuseum: 'Vstoupit do muzea',
+    languageLabel: 'Jazyk',
+    howToPlayLabel: 'Jak Hrát',
+    walkTownTitle: 'Projdi Město',
+    walkTownText: 'Pohybuj se pomocí WASD nebo šipek a přibliž se k domům, abys objevil weby rozmístěné po náměstí.',
+    discoverLabel: 'Objevuj',
+    openWebRoomsTitle: 'Otevírej Webové Místnosti',
+    openWebRoomsText:
+      'Stiskni E u domu pro vstup. Vlastní webové domy se mění na stylizované interiéry inspirované odkazovaným webem, zatímco základní městské domy nejsou interaktivní.',
+    createLabel: 'Tvoř',
+    summonTitle: 'Vyvolej Nové Domy',
+    summonText: 'Použij browser house pro přidání dalších webů na mapu a nech jejich interiéry vygenerovat na pozadí.',
+    summonImageAlt: 'Náhled vyvolání nového webového domu',
+    mapAria: 'Přehled mapy města',
+    mapTitle: 'Navigátor Města',
+    close: 'Zavřít',
+    summonMapLabel: 'Vyvolej Nový Dům',
+    summonPlaceholder: 'Napiš URL nebo hledaný dotaz...',
+    summonButton: 'Vyvolat',
+    nearbyLabel: 'Nablízku',
+    panelTitle: 'Náměstí',
+    panelDescription: 'Přijdi k domu a stiskni E. Každá budova představuje skutečné místo na internetu.',
+    openWebRoom: 'Otevřít Webovou Místnost',
+    visitWebsite: 'Navštívit Web',
+    showMap: 'Zobrazit Mapu',
+    houseBrowser: 'Prohlížeč Domů',
+    browserFact: 'Browser House: obecná navigační místnost webu.',
+    webRoomLabel: 'Uvnitř Webového Domu',
+    webRoomTitle: 'Webová Místnost',
+    webRoomDescription: 'Vstup do domu a interaguj s webem přímo ve hře.',
+    webRoomVisitSite: 'Navštívit Skutečný Web',
+    npcChatLabel: 'Chat s NPC',
+    grandmaTitle: 'DNS Babička',
+    grandmaDescription: 'Ptej se na pohyb po městě, otevírání domů a ovládání mapy.',
+    grandmaPlaceholder: 'Zeptej se DNS Babičky, co dělat dál...',
+    send: 'Odeslat',
+  },
+};
+
 export default function App() {
   const audioRef = useRef(null);
   const musicMutedRef = useRef(false);
@@ -12,6 +101,27 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [locale, setLocale] = useState(() => {
+    if (typeof window === 'undefined') {
+      return 'en';
+    }
+
+    try {
+      const stored = window.localStorage.getItem('museum-locale');
+      return stored === 'cs' ? 'cs' : 'en';
+    } catch {
+      return 'en';
+    }
+  });
+  const welcomeText = welcomeTranslations[locale] || welcomeTranslations.en;
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('museum-locale', locale);
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [locale]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -73,7 +183,7 @@ export default function App() {
       return;
     }
 
-    const gameApi = initMuseumGame();
+    const gameApi = initMuseumGame(document, { locale });
     gameApiRef.current = gameApi;
 
     const backgroundMusic = new Audio('/sounds/background_sound.mp3');
@@ -261,7 +371,7 @@ export default function App() {
       gameApiRef.current?.cleanup();
       gameApiRef.current = null;
     };
-  }, [hasStarted]);
+  }, [hasStarted, locale]);
 
   useEffect(() => {
     const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -324,14 +434,14 @@ export default function App() {
               </div>
               <div id="interactionPrompt" className="interaction-prompt hidden" aria-live="polite"></div>
 
-              <section id="mapOverlay" className="map-overlay hidden" aria-hidden="true" aria-label="Town map overview">
+              <section id="mapOverlay" className="map-overlay hidden" aria-hidden="true" aria-label={welcomeText.mapAria}>
                 <header className="map-overlay-header">
                   <div>
-                    <p className="panel-label">Museum of Internet</p>
-                    <h3>Town Navigator</h3>
+                    <p className="panel-label">{welcomeText.museumLabel}</p>
+                    <h3>{welcomeText.mapTitle}</h3>
                   </div>
                   <button id="closeMapButton" className="button button-secondary" type="button">
-                    Close
+                    {welcomeText.close}
                   </button>
                 </header>
 
@@ -342,17 +452,17 @@ export default function App() {
                   </div>
 
                   <aside className="navigator-form">
-                    <p className="panel-label">Summon New House</p>
+                    <p className="panel-label">{welcomeText.summonMapLabel}</p>
                     <form id="navigatorSearchForm" className="browser-search">
                       <input
                         id="navigatorSearchInput"
                         type="text"
                         name="query"
                         autoComplete="off"
-                        placeholder="Type a URL or search query..."
+                        placeholder={welcomeText.summonPlaceholder}
                       />
                       <button className="button button-primary" type="submit">
-                        Summon
+                        {welcomeText.summonButton}
                       </button>
                     </form>
                     <div id="navigatorStatus" className="status-text tiny"></div>
@@ -363,28 +473,28 @@ export default function App() {
             </div>
 
             <aside className="panel" id="infoPanel">
-              <p className="panel-label">Nearby</p>
-              <h2 id="panelTitle">Town Square</h2>
-              <p id="panelDescription">Walk up to a house and press E. Each building represents a real place on the internet.</p>
+              <p className="panel-label">{welcomeText.nearbyLabel}</p>
+              <h2 id="panelTitle">{welcomeText.panelTitle}</h2>
+              <p id="panelDescription">{welcomeText.panelDescription}</p>
               <div className="panel-actions">
                 <button id="enterRoomButton" className="button button-primary disabled" type="button">
-                  Open Web Room
+                  {welcomeText.openWebRoom}
                 </button>
                 <a id="visitLink" className="button button-primary disabled" href="#" target="_blank" rel="noreferrer">
-                  Visit Website
+                  {welcomeText.visitWebsite}
                 </a>
                 <button id="toggleMapButton" className="button button-secondary" type="button">
-                  Show Map
+                  {welcomeText.showMap}
                 </button>
               </div>
 
               <section className="house-browser-panel" aria-label="House browser">
-                <p className="panel-label">House Browser</p>
+                <p className="panel-label">{welcomeText.houseBrowser}</p>
                 <div id="houseBrowserList" className="house-browser-list"></div>
               </section>
 
               <ul id="panelFacts" className="facts-list">
-                <li>Browser House: a general web navigator room.</li>
+                <li>{welcomeText.browserFact}</li>
               </ul>
             </aside>
           </section>
@@ -394,13 +504,13 @@ export default function App() {
             <section className="web-room-shell" role="dialog" aria-modal="true" aria-labelledby="webRoomTitle">
               <header className="web-room-header">
                 <div>
-                  <p id="webRoomLabel" className="panel-label">Inside Website House</p>
-                  <h2 id="webRoomTitle">Web Room</h2>
+                  <p id="webRoomLabel" className="panel-label">{welcomeText.webRoomLabel}</p>
+                  <h2 id="webRoomTitle">{welcomeText.webRoomTitle}</h2>
                 </div>
               </header>
 
               <p id="webRoomDescription" className="web-room-description">
-                Enter a house to interact with the website from inside the game.
+                {welcomeText.webRoomDescription}
               </p>
 
               <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
@@ -428,7 +538,7 @@ export default function App() {
 
               <div className="web-room-actions">
                 <button id="webRoomOpenButton" className="button button-primary" type="button">
-                  Visit Real Site
+                  {welcomeText.webRoomVisitSite}
                 </button>
               </div>
 
@@ -442,16 +552,16 @@ export default function App() {
             <section className="web-room-shell grandma-chat-shell" role="dialog" aria-modal="true" aria-labelledby="grandmaChatTitle">
               <header className="web-room-header">
                 <div>
-                  <p className="panel-label">NPC Chat</p>
-                  <h2 id="grandmaChatTitle">DNS Grandma</h2>
+                  <p className="panel-label">{welcomeText.npcChatLabel}</p>
+                  <h2 id="grandmaChatTitle">{welcomeText.grandmaTitle}</h2>
                 </div>
                 <button id="grandmaChatCloseButton" className="button button-secondary" type="button">
-                  Close
+                  {welcomeText.close}
                 </button>
               </header>
 
               <p className="web-room-description">
-                Ask anything about moving around town, opening houses, and using map controls.
+                {welcomeText.grandmaDescription}
               </p>
 
               <section id="grandmaChatMessages" className="grandma-chat-messages" aria-live="polite"></section>
@@ -462,54 +572,71 @@ export default function App() {
                   type="text"
                   name="grandmaQuestion"
                   autoComplete="off"
-                  placeholder="Ask DNS Grandma what to do next..."
+                  placeholder={welcomeText.grandmaPlaceholder}
                 />
                 <button id="grandmaChatSendButton" className="button button-primary" type="submit">
-                  Send
+                  {welcomeText.send}
                 </button>
               </form>
             </section>
           </div>
         </>
       ) : (
-        <section className="welcome-shell" aria-label="Welcome page">
+        <section className="welcome-shell" aria-label={welcomeText.welcomeAria}>
           <div className="welcome-backdrop"></div>
           <section className="welcome-card panel">
-            <p className="panel-label">Museum of Internet</p>
-            <h1>Website Shortcut Room</h1>
-            <p className="welcome-intro">
-              Step into a vintage town where each house opens a piece of the web. Wander the streets, summon new sites,
-              and explore internet places as pixel rooms.
-            </p>
+            <div className="welcome-locale-row">
+              <p className="panel-label">{welcomeText.museumLabel}</p>
+              <div className="welcome-locale-switch" role="group" aria-label={welcomeText.languageLabel}>
+                <button
+                  className={`button button-secondary welcome-locale-btn ${locale === 'en' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => setLocale('en')}
+                  aria-pressed={locale === 'en'}
+                >
+                  EN
+                </button>
+                <button
+                  className={`button button-secondary welcome-locale-btn ${locale === 'cs' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => setLocale('cs')}
+                  aria-pressed={locale === 'cs'}
+                >
+                  CZ
+                </button>
+              </div>
+            </div>
+            <h1>{welcomeText.title}</h1>
+            <p className="welcome-intro">{welcomeText.intro}</p>
 
             <div className="welcome-actions">
               <button className="button button-primary welcome-start" type="button" onClick={startGame}>
-                Enter Museum
+                {welcomeText.enterMuseum}
               </button>
             </div>
 
             <div className="welcome-guide-grid">
               <article className="welcome-guide-card">
-                <p className="panel-label">How To Play</p>
-                <h3>Walk The Town</h3>
-                <p>Move with WASD or arrow keys and approach houses to discover websites placed around the square.</p>
+                <p className="panel-label">{welcomeText.howToPlayLabel}</p>
+                <h3>{welcomeText.walkTownTitle}</h3>
+                <p>{welcomeText.walkTownText}</p>
               </article>
 
               <article className="welcome-guide-card">
-                <p className="panel-label">Discover</p>
-                <h3>Open Web Rooms</h3>
-                <p>Press E near a house to enter. Custom website houses become stylized interiors inspired by the linked website, while base town houses are not interactable.</p>
+                <p className="panel-label">{welcomeText.discoverLabel}</p>
+                <h3>{welcomeText.openWebRoomsTitle}</h3>
+                <p>{welcomeText.openWebRoomsText}</p>
               </article>
 
               <article className="welcome-guide-card">
-                <p className="panel-label">Create</p>
-                <h3>Summon New Houses</h3>
+                <p className="panel-label">{welcomeText.createLabel}</p>
+                <h3>{welcomeText.summonTitle}</h3>
                 <img
                   className="welcome-guide-image"
                   src="/assets/walkthrough-preview.png"
-                  alt="Preview of summoning a new website house"
+                  alt={welcomeText.summonImageAlt}
                 />
-                <p>Use the browser house to add more sites to the map and let their interiors generate in the background.</p>
+                <p>{welcomeText.summonText}</p>
               </article>
             </div>
           </section>

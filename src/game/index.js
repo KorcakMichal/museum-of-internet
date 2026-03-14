@@ -1,7 +1,7 @@
 import { getDomRefs } from './dom';
 import { createGameEngine } from './engine';
 
-export function initMuseumGame(root = document) {
+export function initMuseumGame(root = document, options = {}) {
   const refs = getDomRefs(root);
   if (!refs) {
     return {
@@ -13,7 +13,7 @@ export function initMuseumGame(root = document) {
     };
   }
 
-  const engine = createGameEngine(refs);
+  const engine = createGameEngine(refs, options);
   engine.start();
 
   return {
