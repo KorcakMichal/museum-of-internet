@@ -726,7 +726,7 @@ body {
   width: 160px;
   height: 160px;
   left: 24px;
-  top: 120px;
+  top: 60px;
 }
 
 .room-avatar.walking {
@@ -747,9 +747,10 @@ body {
 .room-npc .player-shadow {
   position: absolute;
   bottom: 0;
-  left: 10px;
-  width: 65px;
-  height: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 20px;
   background: rgba(25, 28, 35, 0.22);
   border-radius: 50%;
 }
@@ -764,10 +765,15 @@ body {
   background-image: url("/assets/player/bezdak_0.png");
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transform: scaleX(-1);
 }
 
 .room-avatar.walking .player-sprite {
   animation: player-walk 2.4s steps(1) infinite;
+}
+
+.room-avatar.facing-right .player-sprite {
+  transform: scaleX(1);
 }
 
 .room-avatar .head,

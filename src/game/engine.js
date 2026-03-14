@@ -300,15 +300,21 @@ export function createGameEngine(refs) {
     setRoomInteractionHint(state.nearbyRoomObject);
   }
 
-  function updateRoomAvatarRender(moving) {
+  function updateRoomAvatarRender(moving, horizontalDirection = 0) {
     refs.roomAvatar.style.left = `${state.roomPlayer.x}px`;
     refs.roomAvatar.style.top = `${state.roomPlayer.y}px`;
     refs.roomAvatar.classList.toggle("walking", moving);
+
+    if (horizontalDirection > 0) {
+      refs.roomAvatar.classList.add("facing-right");
+    } else if (horizontalDirection < 0) {
+      refs.roomAvatar.classList.remove("facing-right");
+    }
   }
 
   function resetRoomAvatar() {
     state.roomPlayer.x = 24;
-    state.roomPlayer.y = 120;
+    state.roomPlayer.y = 60;
     state.nearbyRoomObject = null;
     setRoomInteractionHint(null);
     if (refs.roomNpc) refs.roomNpc.classList.remove("nearby");

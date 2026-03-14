@@ -12,7 +12,7 @@ export function createGameState() {
 
   const roomPlayer = {
     x: 24,
-    y: 120,
+    y: 60,
     width: 160,
     height: 160,
     speed: 2.8,
