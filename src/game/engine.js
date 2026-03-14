@@ -23,6 +23,10 @@ export function createGameEngine(refs) {
   let activeIndoorRequestController = null;
   let activeIndoorRequestHouseId = null;
   let activeIndoorRequestPromise = null;
+  const doorSfxTemplate = new Audio("/sounds/door.mp3");
+  doorSfxTemplate.preload = "auto";
+  doorSfxTemplate.volume = 0.55;
+  const activeDoorSfx = new Set();
 
   function logIndoorFlow(step, details = {}) {
     console.info(`[IndoorGen] ${step}`, details);
@@ -33,6 +37,33 @@ export function createGameEngine(refs) {
       ...details,
       message: error instanceof Error ? error.message : String(error),
     });
+  }
+
+  function playDoorSound() {
+    try {
+      const doorSfx = doorSfxTemplate.cloneNode();
+      doorSfx.volume = doorSfxTemplate.volume;
+      activeDoorSfx.add(doorSfx);
+
+      const cleanup = () => {
+        activeDoorSfx.delete(doorSfx);
+        doorSfx.removeEventListener("ended", cleanup);
+        doorSfx.removeEventListener("pause", cleanup);
+      };
+
+      doorSfx.addEventListener("ended", cleanup);
+      doorSfx.addEventListener("pause", cleanup);
+
+      const playPromise = doorSfx.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {
+          cleanup();
+          // Ignore autoplay policy errors or transient playback failures.
+        });
+      }
+    } catch {
+      // Ignore SFX failures to avoid interrupting gameplay.
+    }
   }
 
   // --- Internal UI Helpers ---
@@ -733,6 +764,8 @@ only retro pixel art`,
       return;
     }
 
+    playDoorSound();
+
     setMapOpen(state, refs, false);
     state.activeWebRoomHouse = house;
     state.keys.clear();
@@ -782,6 +815,8 @@ only retro pixel art`,
   }
 
   function closeWebRoom() {
+    playDoorSound();
+
     if (activeIndoorRequestController) {
       logIndoorFlow("Web room closed; keeping active generation running for cache", {
         houseId: activeIndoorRequestHouseId,
