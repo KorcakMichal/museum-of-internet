@@ -436,6 +436,40 @@ export default function App() {
               <section id="webRoomResults" className="web-room-results"></section>
             </section>
           </div>
+
+          <div id="grandmaChat" className="web-room hidden" aria-hidden="true">
+            <div className="web-room-backdrop" data-close-grandma-chat="true"></div>
+            <section className="web-room-shell grandma-chat-shell" role="dialog" aria-modal="true" aria-labelledby="grandmaChatTitle">
+              <header className="web-room-header">
+                <div>
+                  <p className="panel-label">NPC Chat</p>
+                  <h2 id="grandmaChatTitle">DNS Grandma</h2>
+                </div>
+                <button id="grandmaChatCloseButton" className="button button-secondary" type="button">
+                  Close
+                </button>
+              </header>
+
+              <p className="web-room-description">
+                Ask anything about moving around town, opening houses, and using map controls.
+              </p>
+
+              <section id="grandmaChatMessages" className="grandma-chat-messages" aria-live="polite"></section>
+
+              <form id="grandmaChatForm" className="browser-search grandma-chat-form">
+                <input
+                  id="grandmaChatInput"
+                  type="text"
+                  name="grandmaQuestion"
+                  autoComplete="off"
+                  placeholder="Ask DNS Grandma what to do next..."
+                />
+                <button id="grandmaChatSendButton" className="button button-primary" type="submit">
+                  Send
+                </button>
+              </form>
+            </section>
+          </div>
         </>
       ) : (
         <section className="welcome-shell" aria-label="Welcome page">

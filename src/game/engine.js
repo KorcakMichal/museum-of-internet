@@ -16,6 +16,7 @@ import { getRoomAvatarBox, moveRoomAvatar } from "./logic/rooms";
 import { generatePixfluxImage } from "./services/pixellab";
 import { generateIdeas } from "./services/idea-generator";
 import { getDomainSummary } from "./services/domain-summary";
+import { getNpcAnswer } from "./services/npc-answer";
 
 export function createGameEngine(refs) {
   const state = createGameState();
@@ -25,6 +26,7 @@ export function createGameEngine(refs) {
   let activeIndoorRequestController = null;
   let activeIndoorRequestHouseId = null;
   let activeIndoorRequestPromise = null;
+  let activeNpcAnswerController = null;
   const doorSfxTemplate = new Audio("/sounds/door.mp3");
   doorSfxTemplate.preload = "auto";
   doorSfxTemplate.volume = 0.55;
@@ -68,6 +70,44 @@ export function createGameEngine(refs) {
     }
   }
 
+  async function answerWithDnsGrandma(playerMessage) {
+    if (activeNpcAnswerController) {
+      activeNpcAnswerController.abort();
+    }
+
+    const controller = new AbortController();
+    activeNpcAnswerController = controller;
+
+    const nearbyHost = state.nearbyHouse?.url ? getSiteHost(state.nearbyHouse.url) : "";
+
+    try {
+      return await getNpcAnswer({
+        npcName: "DNS Grandma",
+        playerMessage,
+        context: {
+          nearbyHouse: state.nearbyHouse
+            ? {
+                name: state.nearbyHouse.name,
+                host: nearbyHost,
+              }
+            : null,
+        },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return "";
+      }
+
+      console.warn("[NPC] DNS Grandma answer failed", error);
+      return "Walk up to a house and press E to enter. Open the map with M if you need direction.";
+    } finally {
+      if (activeNpcAnswerController === controller) {
+        activeNpcAnswerController = null;
+      }
+    }
+  }
+
   // --- Internal UI Helpers ---
 
   function getDefaultPanelFacts() {
@@ -92,6 +132,71 @@ export function createGameEngine(refs) {
   function setStatus(message = "") {
     refs.webRoomStatus.textContent = message;
     refs.navigatorStatus.textContent = message;
+  }
+
+  function isGrandmaChatOpen() {
+    return !refs.grandmaChat.classList.contains("hidden");
+  }
+
+  function appendGrandmaChatMessage(role, text) {
+    const message = document.createElement("article");
+    const roleClass = role === "player" ? "chat-player" : "chat-grandma";
+    message.className = `grandma-chat-message ${roleClass}`;
+    message.textContent = text;
+    refs.grandmaChatMessages.appendChild(message);
+    refs.grandmaChatMessages.scrollTop = refs.grandmaChatMessages.scrollHeight;
+    return message;
+  }
+
+  function openGrandmaChat() {
+    if (isWebRoomOpen()) {
+      return;
+    }
+
+    setMapOpen(state, refs, false);
+    state.keys.clear();
+    state.roomKeys.clear();
+    refs.grandmaChat.classList.remove("hidden");
+    refs.grandmaChat.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    if (!refs.grandmaChatMessages.children.length) {
+      appendGrandmaChatMessage("grandma", "Oh, you again. Ask your question and make it quick.");
+    }
+
+    refs.grandmaChatInput.focus();
+  }
+
+  function closeGrandmaChat() {
+    refs.grandmaChat.classList.add("hidden");
+    refs.grandmaChat.setAttribute("aria-hidden", "true");
+    refs.grandmaChatInput.value = "";
+
+    if (activeNpcAnswerController) {
+      activeNpcAnswerController.abort();
+      activeNpcAnswerController = null;
+    }
+
+    document.body.style.overflow = isWebRoomOpen() ? "hidden" : "";
+  }
+
+  async function onGrandmaChatSubmit(event) {
+    event.preventDefault();
+    const question = refs.grandmaChatInput.value.trim();
+    if (!question) {
+      return;
+    }
+
+    refs.grandmaChatInput.value = "";
+    appendGrandmaChatMessage("player", question);
+    const pendingMessage = appendGrandmaChatMessage("grandma", "Hmph... thinking.");
+
+    const answer = await answerWithDnsGrandma(question);
+    if (!isGrandmaChatOpen()) {
+      return;
+    }
+
+    pendingMessage.textContent = answer || "Not now. Ask again if you really need help.";
   }
 
   function setWebRoomResultsVisible(visible) {
@@ -1039,7 +1144,7 @@ only retro pixel art`,
     const isTyping = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement;
 
     if (key === "m") {
-      if (isTyping || state.isMapOpen || isWebRoomOpen()) {
+      if (isTyping || state.isMapOpen || isWebRoomOpen() || isGrandmaChatOpen()) {
         return;
       }
       event.preventDefault();
@@ -1053,6 +1158,11 @@ only retro pixel art`,
         setMapOpen(state, refs, false);
         return;
       }
+      if (isGrandmaChatOpen()) {
+        event.preventDefault();
+        closeGrandmaChat();
+        return;
+      }
       if (isWebRoomOpen()) {
         event.preventDefault();
         closeWebRoom();
@@ -1060,7 +1170,7 @@ only retro pixel art`,
       }
     }
 
-    if (isTyping || state.isMapOpen) {
+    if (isTyping || state.isMapOpen || isGrandmaChatOpen()) {
       return;
     }
 
@@ -1083,7 +1193,7 @@ only retro pixel art`,
 
     if (key === "e") {
       if (state.isNearbyGrandma) {
-        setStatus("DNS Grandma: Welcome to the intersection of the World Wide Web, child! I'm here to make sure every name finds its home.");
+        openGrandmaChat();
         return;
       }
       if (state.nearbyHouse) {
@@ -1114,6 +1224,12 @@ only retro pixel art`,
   function onWebRoomClick(event) {
     if (event.target instanceof HTMLElement && event.target.dataset.closeWebRoom === "true") {
       closeWebRoom();
+    }
+  }
+
+  function onGrandmaChatClick(event) {
+    if (event.target instanceof HTMLElement && event.target.dataset.closeGrandmaChat === "true") {
+      closeGrandmaChat();
     }
   }
 
@@ -1173,6 +1289,9 @@ only retro pixel art`,
     refs.toggleMapButton.addEventListener("click", () => setMapOpen(state, refs, !state.isMapOpen));
     refs.closeMapButton.addEventListener("click", onCloseMapClick);
     refs.webRoom.addEventListener("click", onWebRoomClick);
+    refs.grandmaChat.addEventListener("click", onGrandmaChatClick);
+    refs.grandmaChatCloseButton.addEventListener("click", closeGrandmaChat);
+    refs.grandmaChatForm.addEventListener("submit", onGrandmaChatSubmit);
     refs.webRoomOpenButton.addEventListener("click", onWebRoomOpenClick);
     refs.navigatorSearchForm.addEventListener("submit", onNavigatorSubmit);
   }
@@ -1220,12 +1339,20 @@ only retro pixel art`,
       state.rafId = null;
     }
 
+    if (activeNpcAnswerController) {
+      activeNpcAnswerController.abort();
+      activeNpcAnswerController = null;
+    }
+
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("keyup", onKeyUp);
     refs.enterRoomButton.removeEventListener("click", onEnterRoomClick);
     refs.toggleMapButton.removeEventListener("click", () => setMapOpen(state, refs, !state.isMapOpen));
     refs.closeMapButton.removeEventListener("click", onCloseMapClick);
     refs.webRoom.removeEventListener("click", onWebRoomClick);
+    refs.grandmaChat.removeEventListener("click", onGrandmaChatClick);
+    refs.grandmaChatCloseButton.removeEventListener("click", closeGrandmaChat);
+    refs.grandmaChatForm.removeEventListener("submit", onGrandmaChatSubmit);
     refs.webRoomOpenButton.removeEventListener("click", onWebRoomOpenClick);
     refs.navigatorSearchForm.removeEventListener("submit", onNavigatorSubmit);
     document.body.style.overflow = "";
@@ -1245,6 +1372,7 @@ only retro pixel art`,
 
   function triggerVirtualEKey() {
     if (state.isMapOpen) return;
+    if (isGrandmaChatOpen()) return;
     if (isWebRoomOpen()) {
       if (isCustomIndoorRoomOpen()) {
         interactWithRoomObject();
@@ -1252,7 +1380,7 @@ only retro pixel art`,
       return;
     }
     if (state.isNearbyGrandma) {
-      setStatus("DNS Grandma: Welcome to the intersection of the World Wide Web, child! I'm here to make sure every name finds its home.");
+      openGrandmaChat();
       return;
     }
     if (state.nearbyHouse) {
@@ -1261,7 +1389,7 @@ only retro pixel art`,
   }
 
   function triggerVirtualMapKey() {
-    if (isWebRoomOpen()) {
+    if (isWebRoomOpen() || isGrandmaChatOpen()) {
       return;
     }
     setMapOpen(state, refs, !state.isMapOpen);

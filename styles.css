@@ -1204,6 +1204,48 @@ body {
   margin-top: 10px;
 }
 
+.grandma-chat-shell {
+  width: min(780px, calc(100vw - 28px));
+}
+
+.grandma-chat-messages {
+  margin-top: 14px;
+  min-height: 320px;
+  max-height: 48vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(31, 36, 48, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.grandma-chat-message {
+  max-width: min(90%, 520px);
+  padding: 10px 12px;
+  border-radius: 14px;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.grandma-chat-message.chat-player {
+  margin-left: auto;
+  background: #1f2430;
+  color: #fffaef;
+}
+
+.grandma-chat-message.chat-grandma {
+  margin-right: auto;
+  background: rgba(31, 36, 48, 0.08);
+  color: var(--ink);
+}
+
+.grandma-chat-form {
+  margin-top: 12px;
+}
+
 .web-card {
   padding: 16px;
   border-radius: 20px;
