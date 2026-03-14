@@ -675,7 +675,7 @@ body {
   left: 120px;
   top: 460px;
   z-index: 20;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .player-shadow {
@@ -716,6 +716,14 @@ body {
 .dns-grandma .player-sprite {
   background-image: url("/assets/npc/grandma/dnsgrandma.png");
   transform: scaleX(-1);
+}
+
+/* Bottle cursor on character hover (fix for child elements) */
+.world #player:hover, .world #player *:hover,
+.world #dnsGrandma:hover, .world #dnsGrandma *:hover,
+#roomAvatar:hover, #roomAvatar *:hover,
+#roomNpc:hover, #roomNpc *:hover {
+  cursor: url('/assets/cursor-bottle32.png') 0 0, pointer !important;
 }
 
 .player.walking .player-sprite {
