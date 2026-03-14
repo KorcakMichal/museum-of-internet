@@ -443,6 +443,33 @@ export default function App() {
     setHasStarted(true);
   };
 
+  // Play beer opening, clink, burp on player click
+  useEffect(() => {
+    if (!hasStarted) return;
+    const player = document.getElementById('player');
+    if (!player) return;
+
+    let playing = false;
+    const playSounds = () => {
+      if (playing) return;
+      playing = true;
+      const open = new Audio('/sounds/opening_beer.mp3');
+      const clink = new Audio('/sounds/bottle_clink.mp3');
+      const burp = new Audio('/sounds/burp.mp3');
+      open.volume = 1; clink.volume = 1; burp.volume = 1;
+      open.play();
+      open.onended = () => {
+        clink.play();
+        clink.onended = () => {
+          burp.play();
+          burp.onended = () => { playing = false; };
+        };
+      };
+    };
+    player.addEventListener('click', playSounds);
+    return () => player.removeEventListener('click', playSounds);
+  }, [hasStarted]);
+
   return (
     <main className="app-shell">
       {hasStarted ? (
