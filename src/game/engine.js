@@ -21,6 +21,8 @@ export function createGameEngine(refs) {
   const indoorBackdropCache = new Map();
   const indoorIdeaCache = new Map();
   let activeIndoorRequestController = null;
+  let activeIndoorRequestHouseId = null;
+  let activeIndoorRequestPromise = null;
 
   function logIndoorFlow(step, details = {}) {
     console.info(`[IndoorGen] ${step}`, details);
@@ -256,6 +258,16 @@ export function createGameEngine(refs) {
     if (houseResult.status === "created") {
       setPanelContent(houseResult.house);
       setStatus(`Generated ${houseResult.house.name} from ${website.host}.`);
+      logIndoorFlow("Pre-generating indoor after house creation", {
+        houseId: houseResult.house.id,
+        host: website.host,
+      });
+      generateIndoorForHouse(houseResult.house, { silent: true }).catch((error) => {
+        logIndoorError("Background pre-generation failed", error, {
+          houseId: houseResult.house.id,
+          host: website.host,
+        });
+      });
     } else if (houseResult.status === "exists") {
       setPanelContent(houseResult.house);
       setStatus(`${houseResult.house.name} already exists in town.`);
@@ -503,7 +515,9 @@ export function createGameEngine(refs) {
     return null;
   }
 
-  async function generateIndoorForHouse(house) {
+  async function generateIndoorForHouse(house, options = {}) {
+    const { silent = false } = options;
+
     if (!house || !isWebsiteShortcutHouse(house)) {
       clearGeneratedIndoorBackdrop();
       return;
@@ -517,15 +531,34 @@ export function createGameEngine(refs) {
     }
 
     if (activeIndoorRequestController) {
+      if (activeIndoorRequestHouseId === house.id && activeIndoorRequestPromise) {
+        logIndoorFlow("Generation already in progress; reusing request", { houseId: house.id });
+        if (!silent && state.activeWebRoomHouse?.id === house.id) {
+          setStatus("Indoor generation already in progress...");
+        }
+        await activeIndoorRequestPromise;
+
+        const completedImage = indoorBackdropCache.get(house.id);
+        if (completedImage && state.activeWebRoomHouse?.id === house.id) {
+          setGeneratedIndoorBackdrop(completedImage);
+          if (!silent) {
+            setStatus("Indoor generated. Move around and press E near objects.");
+          }
+        }
+        return;
+      }
+
       logIndoorFlow("Aborting previous generation request", {});
       activeIndoorRequestController.abort();
     }
 
     const controller = new AbortController();
     activeIndoorRequestController = controller;
+    activeIndoorRequestHouseId = house.id;
 
     const host = getSiteHost(house.url) || house.name || "website";
     const cachedIdea = indoorIdeaCache.get(house.id);
+    const generationPromise = (async () => {
     logIndoorFlow("Generation started", {
       houseId: house.id,
       host,
@@ -537,7 +570,9 @@ export function createGameEngine(refs) {
 
       if (!idea) {
         logIndoorFlow("Requesting room idea", { houseId: house.id, host });
-        setStatus(`Generating room idea for ${host}...`);
+        if (!silent) {
+          setStatus(`Generating room idea for ${host}...`);
+        }
         const ideaResult = await generateIdeas({
           host,
           signal: controller.signal,
@@ -575,7 +610,9 @@ export function createGameEngine(refs) {
         });
       }
 
-      setStatus(`Generating pixel art indoor for ${host}...`);
+      if (!silent) {
+        setStatus(`Generating pixel art indoor for ${host}...`);
+      }
       logIndoorFlow("Requesting PixelLab image", {
         houseId: house.id,
         host,
@@ -656,7 +693,9 @@ only retro pixel art`,
 
       if (state.activeWebRoomHouse?.id === house.id) {
         setGeneratedIndoorBackdrop(imageSource);
-        setStatus("Indoor generated. Move around and press E near objects.");
+        if (!silent) {
+          setStatus("Indoor generated. Move around and press E near objects.");
+        }
         logIndoorFlow("Generation completed and applied", { houseId: house.id, host });
       }
     } catch (error) {
@@ -669,14 +708,22 @@ only retro pixel art`,
 
       if (state.activeWebRoomHouse?.id === house.id) {
         clearGeneratedIndoorBackdrop();
-        const message = error instanceof Error ? error.message : "Unknown PixelLab error.";
-        setStatus(`Could not generate indoor image: ${message}`);
+        if (!silent) {
+          const message = error instanceof Error ? error.message : "Unknown PixelLab error.";
+          setStatus(`Could not generate indoor image: ${message}`);
+        }
       }
     } finally {
       if (activeIndoorRequestController === controller) {
         activeIndoorRequestController = null;
+        activeIndoorRequestHouseId = null;
+        activeIndoorRequestPromise = null;
       }
     }
+    })();
+
+    activeIndoorRequestPromise = generationPromise;
+    await generationPromise;
   }
 
   // --- Core Lifecycle ---
@@ -736,8 +783,9 @@ only retro pixel art`,
 
   function closeWebRoom() {
     if (activeIndoorRequestController) {
-      activeIndoorRequestController.abort();
-      activeIndoorRequestController = null;
+      logIndoorFlow("Web room closed; keeping active generation running for cache", {
+        houseId: activeIndoorRequestHouseId,
+      });
     }
 
     clearGeneratedIndoorBackdrop();
