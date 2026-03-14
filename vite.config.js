@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Exposes PIXELLAB_SECRET_TOKEN to import.meta.env for the PixelLab client call.
-  envPrefix: ['VITE_', 'PIXELLAB_'],
+  // Exposes selected env vars to import.meta.env for client-side service calls.
+  envPrefix: ['VITE_', 'PIXELLAB_', 'OPENROUTER_'],
 });

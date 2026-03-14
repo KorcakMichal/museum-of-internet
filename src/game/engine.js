@@ -14,11 +14,24 @@ import { movePlayer, updatePlayerRender } from "./logic/movement";
 import { isWebsiteShortcutHouse, runBrowserSearch } from "./logic/search";
 import { getRoomAvatarBox, getRoomObjectBox, moveRoomAvatar } from "./logic/rooms";
 import { generatePixfluxImage } from "./services/pixellab";
+import { generateIdeas } from "./services/idea-generator";
 
 export function createGameEngine(refs) {
   const state = createGameState();
   const indoorBackdropCache = new Map();
+  const indoorIdeaCache = new Map();
   let activeIndoorRequestController = null;
+
+  function logIndoorFlow(step, details = {}) {
+    console.info(`[IndoorGen] ${step}`, details);
+  }
+
+  function logIndoorError(step, error, details = {}) {
+    console.error(`[IndoorGen] ${step}`, {
+      ...details,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   // --- Internal UI Helpers ---
 
@@ -498,11 +511,13 @@ export function createGameEngine(refs) {
 
     const cached = indoorBackdropCache.get(house.id);
     if (cached) {
+      logIndoorFlow("Image cache hit", { houseId: house.id });
       setGeneratedIndoorBackdrop(cached);
       return;
     }
 
     if (activeIndoorRequestController) {
+      logIndoorFlow("Aborting previous generation request", {});
       activeIndoorRequestController.abort();
     }
 
@@ -510,36 +525,104 @@ export function createGameEngine(refs) {
     activeIndoorRequestController = controller;
 
     const host = getSiteHost(house.url) || house.name || "website";
-    setStatus(`Generating indoor for ${host} house...`);
+    const cachedIdea = indoorIdeaCache.get(house.id);
+    logIndoorFlow("Generation started", {
+      houseId: house.id,
+      host,
+      hasCachedIdea: Boolean(cachedIdea),
+    });
 
     try {
+      let idea = (cachedIdea || "").trim();
+
+      if (!idea) {
+        logIndoorFlow("Requesting room idea", { houseId: house.id, host });
+        setStatus(`Generating room idea for ${host}...`);
+        const ideaResult = await generateIdeas({
+          host,
+          signal: controller.signal,
+        });
+
+        if (activeIndoorRequestController !== controller) {
+          return;
+        }
+
+        const summary = (ideaResult?.summary || "").trim();
+        logIndoorFlow("Page summary resolved", {
+          houseId: house.id,
+          host,
+          summaryLength: summary.length,
+          summaryPreview: summary.slice(0, 180),
+        });
+
+        idea = (ideaResult?.description || "").trim();
+        if (!idea) {
+          throw new Error("Idea generator returned empty room description.");
+        }
+
+        logIndoorFlow("Room idea generated", {
+          houseId: house.id,
+          host,
+          ideaLength: idea.length,
+          ideaPreview: idea.slice(0, 140),
+        });
+      } else {
+        logIndoorFlow("Idea cache hit", {
+          houseId: house.id,
+          host,
+          ideaLength: idea.length,
+          ideaPreview: idea.slice(0, 140),
+        });
+      }
+
+      setStatus(`Generating pixel art indoor for ${host}...`);
+      logIndoorFlow("Requesting PixelLab image", {
+        houseId: house.id,
+        host,
+        width: 128,
+        height: 64,
+      });
+
       const generated = await generatePixfluxImage({
-        description: `Retro 16-bit pixel art platformer level.
+        description: `Create a retro 16-bit pixel art scene designed like a classic 2D side-scrolling platform game level.
 
-Strict 2D side view.
-No perspective depth.
-No 3D rendering.
+ROOM IDEA:
+${idea}
 
-Scene:
-Interior of a house representing the website "${host}".
-
-Theme of the room should match the website type:
-- hacker room
-- editorial newsroom
-- office workspace
-
-Layout rules:
-- LEFT SIDE: one large door (must be visible)
-- CENTER: platforms, desks, computers and objects arranged like a 2D platform game level
-- RIGHT SIDE: a clear stack of newspapers
-
-The website name "${host}" must appear somewhere in the room.
-
-Style:
+STYLE:
 retro 16-bit pixel art
 classic platformer screenshot
-flat colors
-pixel graphics`,
+clean pixel graphics
+bright readable colors
+
+PERSPECTIVE:
+strict side view
+flat 2D scene
+no depth perspective
+no 3D rendering
+
+SCENE STRUCTURE:
+
+LEFT SIDE (mandatory):
+one large door on the left side of the room
+
+CENTER:
+platforms made from furniture, desks, computers, shelves, cables, and objects described in the room idea
+
+RIGHT SIDE (mandatory):
+a visible stack of newspapers
+
+BRANDING:
+the text "${host}" must appear somewhere in the room (wall sign, computer screen, poster, or neon sign)
+
+The environment represents the interior of a house that symbolizes the website.
+
+NEGATIVE CONSTRAINTS:
+no 3D graphics
+no perspective depth
+no photorealism
+no modern UI elements
+only retro pixel art`,
         width: 128,
         height: 64,
         noBackground: false,
@@ -555,16 +638,34 @@ pixel graphics`,
         throw new Error("PixelLab response did not include image data.");
       }
 
+      logIndoorFlow("PixelLab image generated", {
+        houseId: house.id,
+        host,
+        imageSourceType: imageSource.startsWith("data:image/") ? "base64" : "url",
+        imageSourceLength: imageSource.length,
+      });
+
+      indoorIdeaCache.set(house.id, idea);
       indoorBackdropCache.set(house.id, imageSource);
+      logIndoorFlow("Cached generated assets", {
+        houseId: house.id,
+        host,
+        ideaCacheSize: indoorIdeaCache.size,
+        imageCacheSize: indoorBackdropCache.size,
+      });
 
       if (state.activeWebRoomHouse?.id === house.id) {
         setGeneratedIndoorBackdrop(imageSource);
         setStatus("Indoor generated. Move around and press E near objects.");
+        logIndoorFlow("Generation completed and applied", { houseId: house.id, host });
       }
     } catch (error) {
       if (error?.name === "AbortError") {
+        logIndoorFlow("Generation aborted", { houseId: house.id, host });
         return;
       }
+
+      logIndoorError("Generation failed", error, { houseId: house.id, host });
 
       if (state.activeWebRoomHouse?.id === house.id) {
         clearGeneratedIndoorBackdrop();
