@@ -12,14 +12,16 @@ import { makeButton, makeLink, makeCard, clearElement } from "./ui/helpers";
 import { setMapOpen, renderMapHouseMarkers } from "./ui/map";
 import { movePlayer, updatePlayerRender } from "./logic/movement";
 import { isWebsiteShortcutHouse, runBrowserSearch } from "./logic/search";
-import { getRoomAvatarBox, getRoomObjectBox, moveRoomAvatar } from "./logic/rooms";
+import { getRoomAvatarBox, moveRoomAvatar } from "./logic/rooms";
 import { generatePixfluxImage } from "./services/pixellab";
 import { generateIdeas } from "./services/idea-generator";
+import { getDomainSummary } from "./services/domain-summary";
 
 export function createGameEngine(refs) {
   const state = createGameState();
   const indoorBackdropCache = new Map();
   const indoorIdeaCache = new Map();
+  const indoorPageInfoCache = new Map();
   let activeIndoorRequestController = null;
   let activeIndoorRequestHouseId = null;
   let activeIndoorRequestPromise = null;
@@ -319,8 +321,8 @@ export function createGameEngine(refs) {
     }
 
     const labels = {
-      npc: "Press E to talk with the character",
-      newspapers: "Press E to read newspapers",
+      npc: "Press E to leave the room",
+      newspapers: "Press E to view website info",
     };
 
     refs.roomInteractionHint.textContent = labels[target] || "Press E to interact";
@@ -336,18 +338,37 @@ export function createGameEngine(refs) {
       height: avatar.height + 28,
     };
 
-    const npcBox = getRoomObjectBox(refs.roomNpc);
-    const newspapersBox = getRoomObjectBox(refs.roomNewspapers);
+    const walkWidth = refs.roomWalkArea?.clientWidth || 0;
+    const walkHeight = refs.roomWalkArea?.clientHeight || 0;
+    const zoneWidth = Math.min(180, Math.max(120, Math.floor(walkWidth * 0.22)));
 
-    const npcVisible = refs.roomNpc && !refs.roomNpc.classList.contains("hidden");
-    const newspapersVisible = refs.roomNewspapers && !refs.roomNewspapers.classList.contains("hidden");
+    const leftExitZone = {
+      x: 0,
+      y: 0,
+      width: zoneWidth,
+      height: walkHeight,
+    };
 
-    if (refs.roomNpc) refs.roomNpc.classList.toggle("nearby", Boolean(npcVisible && npcBox && intersects(checkArea, npcBox)));
-    if (refs.roomNewspapers) refs.roomNewspapers.classList.toggle("nearby", Boolean(newspapersVisible && newspapersBox && intersects(checkArea, newspapersBox)));
+    const rightInfoZone = {
+      x: Math.max(0, walkWidth - zoneWidth),
+      y: 0,
+      width: zoneWidth,
+      height: walkHeight,
+    };
 
-    if (npcVisible && npcBox && intersects(checkArea, npcBox)) {
+    const nearLeftExit = walkWidth > 0 && walkHeight > 0 && intersects(checkArea, leftExitZone);
+    const nearRightInfo = walkWidth > 0 && walkHeight > 0 && intersects(checkArea, rightInfoZone);
+
+    if (refs.roomNpc) {
+      refs.roomNpc.classList.toggle("nearby", nearLeftExit);
+    }
+    if (refs.roomNewspapers) {
+      refs.roomNewspapers.classList.toggle("nearby", nearRightInfo);
+    }
+
+    if (nearLeftExit) {
       state.nearbyRoomObject = "npc";
-    } else if (newspapersVisible && newspapersBox && intersects(checkArea, newspapersBox)) {
+    } else if (nearRightInfo) {
       state.nearbyRoomObject = "newspapers";
     } else {
       state.nearbyRoomObject = null;
@@ -378,33 +399,77 @@ export function createGameEngine(refs) {
     updateRoomAvatarRender(false);
   }
 
-  function interactWithRoomObject() {
+  function formatHouseInfoText(house, info) {
+    const host = getSiteHost(house?.url) || house?.url || "unknown website";
+    const summary = (info?.summary || house?.description || "No summary available yet.").trim();
+    const source = info?.source ? `Source: ${info.source}.` : "";
+    const title = info?.title || house?.name || "Website House";
+    return `${title} (${host}). ${summary}${source ? ` ${source}` : ""}`;
+  }
+
+  async function resolveHouseInfo(house) {
+    if (!house) {
+      return null;
+    }
+
+    const cached = indoorPageInfoCache.get(house.id);
+    if (cached) {
+      return cached;
+    }
+
+    const domain = getSiteHost(house.url) || house.url;
+    if (!domain) {
+      return null;
+    }
+
+    const info = await getDomainSummary({ domain });
+    indoorPageInfoCache.set(house.id, info);
+    return info;
+  }
+
+  async function interactWithRoomObject() {
     if (!state.nearbyRoomObject || !state.activeWebRoomHouse) {
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = "Move closer to the character or newspapers.";
+        refs.roomInteractionHint.textContent = "Move to the left side to leave, or to the right side for website info.";
         refs.roomInteractionHint.classList.remove("hidden");
       } else {
-        setStatus("Walk close to the character or newspapers first.");
+        setStatus("Walk close to the left exit or right info papers first.");
       }
       return;
     }
 
     if (state.nearbyRoomObject === "npc") {
-      const npcText = state.activeWebRoomHouse.npcText || `Character: Welcome to ${state.activeWebRoomHouse.name}.`;
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = npcText;
-        refs.roomInteractionHint.classList.remove("hidden");
-      } else {
-        setStatus(`${npcText} I can help you navigate this room.`);
+        closeWebRoom();
       }
       return;
     }
 
+    const house = state.activeWebRoomHouse;
     if (isCustomIndoorRoomOpen()) {
-      refs.roomInteractionHint.textContent = "Newspapers: Headlines mention browsers and internet history.";
+      refs.roomInteractionHint.textContent = "Loading website info...";
       refs.roomInteractionHint.classList.remove("hidden");
-    } else {
-      setStatus("Newspapers: Headlines mention browsers, open web standards, and internet history.");
+    }
+
+    try {
+      const info = await resolveHouseInfo(house);
+      const details = formatHouseInfoText(house, info);
+      setStatus(details);
+      if (isCustomIndoorRoomOpen()) {
+        refs.roomInteractionHint.textContent = "Website info shown below.";
+        refs.roomInteractionHint.classList.remove("hidden");
+      }
+    } catch (error) {
+      logIndoorError("Failed to resolve website info", error, {
+        houseId: house.id,
+        url: house.url,
+      });
+      const fallback = formatHouseInfoText(house, null);
+      setStatus(fallback);
+      if (isCustomIndoorRoomOpen()) {
+        refs.roomInteractionHint.textContent = "Using fallback website info.";
+        refs.roomInteractionHint.classList.remove("hidden");
+      }
     }
   }
 
@@ -620,6 +685,16 @@ export function createGameEngine(refs) {
           summaryLength: summary.length,
           summaryPreview: summary.slice(0, 180),
         });
+
+        if (summary) {
+          indoorPageInfoCache.set(house.id, {
+            domain: host,
+            title: house.name,
+            source: ideaResult?.source || "idea-generator",
+            summary,
+            colors: Array.isArray(ideaResult?.colors) ? ideaResult.colors : [],
+          });
+        }
 
         idea = (ideaResult?.description || "").trim();
         if (!idea) {
