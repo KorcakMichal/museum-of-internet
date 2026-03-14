@@ -82,6 +82,39 @@ body {
   background: var(--grass-dark); /* Background color for when camera goes out of bounds */
 }
 
+.music-dock {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2000;
+  width: min(340px, calc(100vw - 24px));
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.music-dock-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.music-volume {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.music-dock input[type="range"] {
+  width: 100%;
+}
+
+@media (max-width: 740px) {
+  .music-dock {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+  }
+}
+
 .world {
   position: relative;
   width: 4000px;
