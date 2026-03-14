@@ -5,10 +5,39 @@ export default function App() {
   const audioRef = useRef(null);
   const musicMutedRef = useRef(false);
   const musicVolumeRef = useRef(35);
+  const gameApiRef = useRef(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [musicMuted, setMusicMuted] = useState(false);
   const [musicVolume, setMusicVolume] = useState(35);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const coarsePointer = window.matchMedia('(pointer: coarse)');
+    const noHover = window.matchMedia('(hover: none)');
+
+    const updateTouchControls = () => {
+      const isNarrowViewport = window.innerWidth <= 1024;
+      const touchCapable = window.navigator.maxTouchPoints > 0;
+      setShowTouchControls(isNarrowViewport && touchCapable && (coarsePointer.matches || noHover.matches));
+    };
+
+    updateTouchControls();
+    window.addEventListener('resize', updateTouchControls);
+    coarsePointer.addEventListener('change', updateTouchControls);
+    noHover.addEventListener('change', updateTouchControls);
+
+    return () => {
+      window.removeEventListener('resize', updateTouchControls);
+      coarsePointer.removeEventListener('change', updateTouchControls);
+      noHover.removeEventListener('change', updateTouchControls);
+    };
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -44,7 +73,8 @@ export default function App() {
       return;
     }
 
-    const cleanup = initMuseumGame();
+    const gameApi = initMuseumGame();
+    gameApiRef.current = gameApi;
 
     const backgroundMusic = new Audio('/sounds/background_sound.mp3');
     backgroundMusic.loop = false;
@@ -228,9 +258,24 @@ export default function App() {
       if (audioRef.current === backgroundMusic) {
         audioRef.current = null;
       }
-      cleanup();
+      gameApiRef.current?.cleanup();
+      gameApiRef.current = null;
     };
   }, [hasStarted]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   const handleVolumeChange = (event) => {
     setMusicVolume(Number(event.target.value));
@@ -446,6 +491,61 @@ export default function App() {
       >
         <span className="settings-icon" aria-hidden="true"></span>
       </button>
+
+      {hasStarted && showTouchControls && (
+        <div className="mobile-controls" aria-hidden="true">
+          <div className="mobile-dpad">
+            <button
+              className="mobile-dpad-btn mobile-dpad-up"
+              type="button"
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); gameApiRef.current?.pressKey('arrowup'); }}
+              onPointerUp={() => gameApiRef.current?.releaseKey('arrowup')}
+              onPointerLeave={() => gameApiRef.current?.releaseKey('arrowup')}
+            >▲</button>
+            <button
+              className="mobile-dpad-btn mobile-dpad-left"
+              type="button"
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); gameApiRef.current?.pressKey('arrowleft'); }}
+              onPointerUp={() => gameApiRef.current?.releaseKey('arrowleft')}
+              onPointerLeave={() => gameApiRef.current?.releaseKey('arrowleft')}
+            >◄</button>
+            <button
+              className="mobile-dpad-btn mobile-dpad-right"
+              type="button"
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); gameApiRef.current?.pressKey('arrowright'); }}
+              onPointerUp={() => gameApiRef.current?.releaseKey('arrowright')}
+              onPointerLeave={() => gameApiRef.current?.releaseKey('arrowright')}
+            >►</button>
+            <button
+              className="mobile-dpad-btn mobile-dpad-down"
+              type="button"
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); gameApiRef.current?.pressKey('arrowdown'); }}
+              onPointerUp={() => gameApiRef.current?.releaseKey('arrowdown')}
+              onPointerLeave={() => gameApiRef.current?.releaseKey('arrowdown')}
+            >▼</button>
+          </div>
+
+          <div className="mobile-actions">
+            <button
+              className="mobile-btn mobile-fullscreen-btn"
+              type="button"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >{isFullscreen ? '⛶' : '⛶'}</button>
+            <button
+              className="mobile-btn mobile-map-btn"
+              type="button"
+              onPointerDown={() => gameApiRef.current?.triggerMap()}
+              title="Toggle map"
+            >M</button>
+            <button
+              className="mobile-btn mobile-action-btn"
+              type="button"
+              onPointerDown={() => gameApiRef.current?.triggerAction()}
+            >E</button>
+          </div>
+        </div>
+      )}
 
       <section
         className={`settings-overlay panel ${isSettingsOpen ? '' : 'hidden'}`}

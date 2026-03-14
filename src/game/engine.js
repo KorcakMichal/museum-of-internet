@@ -1231,5 +1231,41 @@ only retro pixel art`,
     document.body.style.overflow = "";
   }
 
-  return { start, stop };
+  function pressVirtualKey(key) {
+    const k = key.toLowerCase();
+    state.keys.add(k);
+    state.roomKeys.add(k);
+  }
+
+  function releaseVirtualKey(key) {
+    const k = key.toLowerCase();
+    state.keys.delete(k);
+    state.roomKeys.delete(k);
+  }
+
+  function triggerVirtualEKey() {
+    if (state.isMapOpen) return;
+    if (isWebRoomOpen()) {
+      if (isCustomIndoorRoomOpen()) {
+        interactWithRoomObject();
+      }
+      return;
+    }
+    if (state.isNearbyGrandma) {
+      setStatus("DNS Grandma: Welcome to the intersection of the World Wide Web, child! I'm here to make sure every name finds its home.");
+      return;
+    }
+    if (state.nearbyHouse) {
+      openWebRoom(state.nearbyHouse);
+    }
+  }
+
+  function triggerVirtualMapKey() {
+    if (isWebRoomOpen()) {
+      return;
+    }
+    setMapOpen(state, refs, !state.isMapOpen);
+  }
+
+  return { start, stop, pressVirtualKey, releaseVirtualKey, triggerVirtualEKey, triggerVirtualMapKey };
 }
