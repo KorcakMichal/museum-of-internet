@@ -5,6 +5,7 @@ export default function App() {
   const audioRef = useRef(null);
   const musicMutedRef = useRef(false);
   const musicVolumeRef = useRef(35);
+  const [hasStarted, setHasStarted] = useState(false);
   const [musicMuted, setMusicMuted] = useState(false);
   const [musicVolume, setMusicVolume] = useState(35);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -39,6 +40,10 @@ export default function App() {
   }, [isSettingsOpen]);
 
   useEffect(() => {
+    if (!hasStarted) {
+      return;
+    }
+
     const cleanup = initMuseumGame();
 
     const backgroundMusic = new Audio('/sounds/background_sound.mp3');
@@ -225,7 +230,7 @@ export default function App() {
       }
       cleanup();
     };
-  }, []);
+  }, [hasStarted]);
 
   const handleVolumeChange = (event) => {
     setMusicVolume(Number(event.target.value));
@@ -243,96 +248,194 @@ export default function App() {
     setIsSettingsOpen(false);
   };
 
+  const startGame = () => {
+    setHasStarted(true);
+  };
+
   return (
     <main className="app-shell">
-      <section className="game-layout">
-        <div className="world-frame">
-          <div id="world" className="world" aria-label="Town map">
-            <div className="skyline"></div>
-            <div className="road road-horizontal"></div>
-            <div className="road road-vertical"></div>
-            <div className="square"></div>
+      {hasStarted ? (
+        <>
+          <section className="game-layout">
+            <div className="world-frame">
+              <div id="world" className="world" aria-label="Town map">
+                <div className="skyline"></div>
+                <div className="road road-horizontal"></div>
+                <div className="road road-vertical"></div>
+                <div className="square"></div>
 
-            <div className="trees trees-top"></div>
-            <div className="trees trees-bottom"></div>
+                <div className="trees trees-top"></div>
+                <div className="trees trees-bottom"></div>
 
-            <div id="player" className="player" aria-label="Player character">
-              <div className="player-shadow"></div>
-              <div className="player-sprite"></div>
-            </div>
+                <div id="player" className="player" aria-label="Player character">
+                  <div className="player-shadow"></div>
+                  <div className="player-sprite"></div>
+                </div>
 
-            <div id="dnsGrandma" className="npc dns-grandma" aria-label="DNS Grandma NPC">
-              <div className="player-shadow"></div>
-              <div className="player-sprite"></div>
-            </div>
-          </div>
-          <div id="interactionPrompt" className="interaction-prompt hidden" aria-live="polite"></div>
-
-          <section id="mapOverlay" className="map-overlay hidden" aria-hidden="true" aria-label="Town map overview">
-            <header className="map-overlay-header">
-              <div>
-                <p className="panel-label">Museum of Internet</p>
-                <h3>Town Navigator</h3>
+                <div id="dnsGrandma" className="npc dns-grandma" aria-label="DNS Grandma NPC">
+                  <div className="player-shadow"></div>
+                  <div className="player-sprite"></div>
+                </div>
               </div>
-              <button id="closeMapButton" className="button button-secondary" type="button">
-                Close
-              </button>
-            </header>
+              <div id="interactionPrompt" className="interaction-prompt hidden" aria-live="polite"></div>
 
-            <div className="map-overlay-content">
-              <div id="miniMap" className="mini-map" role="img" aria-label="Overview map with houses and player position">
-                <div id="mapHouseMarkers" className="map-house-markers"></div>
-                <div id="mapPlayerMarker" className="map-player-marker" aria-hidden="true"></div>
-              </div>
-
-              <aside className="navigator-form">
-                <p className="panel-label">Summon New House</p>
-                <form id="navigatorSearchForm" className="browser-search">
-                  <input
-                    id="navigatorSearchInput"
-                    type="text"
-                    name="query"
-                    autoComplete="off"
-                    placeholder="Type a URL or search query..."
-                  />
-                  <button className="button button-primary" type="submit">
-                    Summon
+              <section id="mapOverlay" className="map-overlay hidden" aria-hidden="true" aria-label="Town map overview">
+                <header className="map-overlay-header">
+                  <div>
+                    <p className="panel-label">Museum of Internet</p>
+                    <h3>Town Navigator</h3>
+                  </div>
+                  <button id="closeMapButton" className="button button-secondary" type="button">
+                    Close
                   </button>
-                </form>
-                <div id="navigatorStatus" className="status-text tiny"></div>
-                <div id="navigatorResults" className="navigator-results"></div>
-              </aside>
+                </header>
+
+                <div className="map-overlay-content">
+                  <div id="miniMap" className="mini-map" role="img" aria-label="Overview map with houses and player position">
+                    <div id="mapHouseMarkers" className="map-house-markers"></div>
+                    <div id="mapPlayerMarker" className="map-player-marker" aria-hidden="true"></div>
+                  </div>
+
+                  <aside className="navigator-form">
+                    <p className="panel-label">Summon New House</p>
+                    <form id="navigatorSearchForm" className="browser-search">
+                      <input
+                        id="navigatorSearchInput"
+                        type="text"
+                        name="query"
+                        autoComplete="off"
+                        placeholder="Type a URL or search query..."
+                      />
+                      <button className="button button-primary" type="submit">
+                        Summon
+                      </button>
+                    </form>
+                    <div id="navigatorStatus" className="status-text tiny"></div>
+                    <div id="navigatorResults" className="navigator-results"></div>
+                  </aside>
+                </div>
+              </section>
+            </div>
+
+            <aside className="panel" id="infoPanel">
+              <p className="panel-label">Nearby</p>
+              <h2 id="panelTitle">Town Square</h2>
+              <p id="panelDescription">Walk up to a house and press E. Each building represents a real place on the internet.</p>
+              <div className="panel-actions">
+                <button id="enterRoomButton" className="button button-primary disabled" type="button">
+                  Open Web Room
+                </button>
+                <a id="visitLink" className="button button-primary disabled" href="#" target="_blank" rel="noreferrer">
+                  Visit Website
+                </a>
+                <button id="toggleMapButton" className="button button-secondary" type="button">
+                  Show Map
+                </button>
+              </div>
+
+              <section className="house-browser-panel" aria-label="House browser">
+                <p className="panel-label">House Browser</p>
+                <div id="houseBrowserList" className="house-browser-list"></div>
+              </section>
+
+              <ul id="panelFacts" className="facts-list">
+                <li>Browser House: a general web navigator room.</li>
+              </ul>
+            </aside>
+          </section>
+
+          <div id="webRoom" className="web-room hidden" aria-hidden="true">
+            <div className="web-room-backdrop" data-close-web-room="true"></div>
+            <section className="web-room-shell" role="dialog" aria-modal="true" aria-labelledby="webRoomTitle">
+              <header className="web-room-header">
+                <div>
+                  <p id="webRoomLabel" className="panel-label">Inside Website House</p>
+                  <h2 id="webRoomTitle">Web Room</h2>
+                </div>
+              </header>
+
+              <p id="webRoomDescription" className="web-room-description">
+                Enter a house to interact with the website from inside the game.
+              </p>
+
+              <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
+                <div id="roomIndoorBackdrop" className="room-indoor-backdrop hidden" aria-hidden="true"></div>
+                <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
+                  <div id="roomAvatar" className="room-avatar" aria-hidden="true">
+                    <div className="player-shadow"></div>
+                    <div className="player-sprite"></div>
+                  </div>
+
+                  <div id="roomNpc" className="room-npc room-object hidden" aria-hidden="true">
+                    <div className="player-shadow"></div>
+                    <div className="player-sprite"></div>
+                  </div>
+
+                  <div id="roomNewspapers" className="room-newspapers room-object hidden" aria-hidden="true">
+                    <span className="paper p1"></span>
+                    <span className="paper p2"></span>
+                    <span className="paper p3"></span>
+                  </div>
+
+                  <p id="roomInteractionHint" className="room-interaction-hint hidden" aria-live="polite"></p>
+                </div>
+              </section>
+
+              <div className="web-room-actions">
+                <button id="webRoomOpenButton" className="button button-primary" type="button">
+                  Visit Real Site
+                </button>
+              </div>
+
+              <div id="webRoomStatus" className="web-room-status" aria-live="polite"></div>
+              <section id="webRoomResults" className="web-room-results"></section>
+            </section>
+          </div>
+        </>
+      ) : (
+        <section className="welcome-shell" aria-label="Welcome page">
+          <div className="welcome-backdrop"></div>
+          <section className="welcome-card panel">
+            <p className="panel-label">Museum of Internet</p>
+            <h1>Website Shortcut Room</h1>
+            <p className="welcome-intro">
+              Step into a vintage town where each house opens a piece of the web. Wander the streets, summon new sites,
+              and explore internet places as pixel rooms.
+            </p>
+
+            <div className="welcome-actions">
+              <button className="button button-primary welcome-start" type="button" onClick={startGame}>
+                Enter Museum
+              </button>
+            </div>
+
+            <div className="welcome-guide-grid">
+              <article className="welcome-guide-card">
+                <p className="panel-label">How To Play</p>
+                <h3>Walk The Town</h3>
+                <p>Move with WASD or arrow keys and approach houses to discover websites placed around the square.</p>
+              </article>
+
+              <article className="welcome-guide-card">
+                <p className="panel-label">Discover</p>
+                <h3>Open Web Rooms</h3>
+                <p>Press E near a house to enter. Custom website houses become stylized interiors inspired by the linked website, while base town houses are not interactable.</p>
+              </article>
+
+              <article className="welcome-guide-card">
+                <p className="panel-label">Create</p>
+                <h3>Summon New Houses</h3>
+                <img
+                  className="welcome-guide-image"
+                  src="/assets/walkthrough-preview.png"
+                  alt="Preview of summoning a new website house"
+                />
+                <p>Use the browser house to add more sites to the map and let their interiors generate in the background.</p>
+              </article>
             </div>
           </section>
-
-        </div>
-
-        <aside className="panel" id="infoPanel">
-          <p className="panel-label">Nearby</p>
-          <h2 id="panelTitle">Town Square</h2>
-          <p id="panelDescription">Walk up to a house and press E. Each building represents a real place on the internet.</p>
-          <div className="panel-actions">
-            <button id="enterRoomButton" className="button button-primary disabled" type="button">
-              Open Web Room
-            </button>
-            <a id="visitLink" className="button button-primary disabled" href="#" target="_blank" rel="noreferrer">
-              Visit Website
-            </a>
-            <button id="toggleMapButton" className="button button-secondary" type="button">
-              Show Map
-            </button>
-          </div>
-
-          <section className="house-browser-panel" aria-label="House browser">
-            <p className="panel-label">House Browser</p>
-            <div id="houseBrowserList" className="house-browser-list"></div>
-          </section>
-
-          <ul id="panelFacts" className="facts-list">
-            <li>Browser House: a general web navigator room.</li>
-          </ul>
-        </aside>
-      </section>
+        </section>
+      )}
 
       <button
         className="button button-secondary settings-trigger"
@@ -380,53 +483,6 @@ export default function App() {
         </div>
       </section>
 
-      <div id="webRoom" className="web-room hidden" aria-hidden="true">
-        <div className="web-room-backdrop" data-close-web-room="true"></div>
-        <section className="web-room-shell" role="dialog" aria-modal="true" aria-labelledby="webRoomTitle">
-          <header className="web-room-header">
-            <div>
-              <p id="webRoomLabel" className="panel-label">Inside Website House</p>
-              <h2 id="webRoomTitle">Web Room</h2>
-            </div>
-          </header>
-
-          <p id="webRoomDescription" className="web-room-description">
-            Enter a house to interact with the website from inside the game.
-          </p>
-
-          <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
-            <div id="roomIndoorBackdrop" className="room-indoor-backdrop hidden" aria-hidden="true"></div>
-            <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
-              <div id="roomAvatar" className="room-avatar" aria-hidden="true">
-                <div className="player-shadow"></div>
-                <div className="player-sprite"></div>
-              </div>
-
-              <div id="roomNpc" className="room-npc room-object hidden" aria-hidden="true">
-                <div className="player-shadow"></div>
-                <div className="player-sprite"></div>
-              </div>
-
-              <div id="roomNewspapers" className="room-newspapers room-object hidden" aria-hidden="true">
-                <span className="paper p1"></span>
-                <span className="paper p2"></span>
-                <span className="paper p3"></span>
-              </div>
-
-              <p id="roomInteractionHint" className="room-interaction-hint hidden" aria-live="polite"></p>
-            </div>
-          </section>
-
-          <div className="web-room-actions">
-            <button id="webRoomOpenButton" className="button button-primary" type="button">
-              Visit Real Site
-            </button>
-          </div>
-
-          <div id="webRoomStatus" className="web-room-status" aria-live="polite"></div>
-          <section id="webRoomResults" className="web-room-results"></section>
-        </section>
-      </div>
     </main>
   );
 }
