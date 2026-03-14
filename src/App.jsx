@@ -414,7 +414,6 @@ export default function App() {
           <section className="game-layout">
             <div className="world-frame">
               <div id="world" className="world" aria-label="Town map">
-                <div className="skyline"></div>
                 <div className="road road-horizontal"></div>
                 <div className="road road-vertical"></div>
                 <div className="square"></div>
