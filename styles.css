@@ -216,13 +216,12 @@ body {
   inset: 0;
   background-image: repeating-linear-gradient(
     90deg,
-    transparent 0 22px,
-    var(--road-line) 22px 44px,
-    transparent 44px 66px
+    var(--road-line) 0 22px,
+    transparent 22px 44px
   );
-  background-size: 120px 8px;
+  background-size: 44px 8px;
   background-repeat: repeat-x;
-  background-position: center;
+  background-position: left center;
 }
 
 .road-horizontal {
@@ -243,12 +242,12 @@ body {
 .road-vertical::after {
   background-image: repeating-linear-gradient(
     180deg,
-    transparent 0 22px,
-    var(--road-line) 22px 44px,
-    transparent 44px 66px
+    var(--road-line) 0 22px,
+    transparent 22px 44px
   );
   background-repeat: repeat-y;
-  background-size: 8px 120px;
+  background-size: 8px 44px;
+  background-position: center top;
 }
 
 .square {
@@ -267,19 +266,9 @@ body {
   background-color: var(--road-line);
 }
 
-/* Vertical dashed line only */
+/* No stripe in the center square */
 .square::after {
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  transform: translateX(-50%);
-  background: repeating-linear-gradient(
-    180deg,
-    var(--road-line) 0 22px,
-    transparent 22px 44px
-  );
-  background-size: 8px 44px;
+  display: none;
 }
 
 .lot {
