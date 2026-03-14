@@ -308,7 +308,7 @@ export function createGameEngine(refs) {
 
   function resetRoomAvatar() {
     state.roomPlayer.x = 24;
-    state.roomPlayer.y = 150;
+    state.roomPlayer.y = 120;
     state.nearbyRoomObject = null;
     setRoomInteractionHint(null);
     if (refs.roomNpc) refs.roomNpc.classList.remove("nearby");
@@ -508,9 +508,34 @@ export function createGameEngine(refs) {
 
     try {
       const generated = await generatePixfluxImage({
-        description: `pixel art cozy internet office interior for ${host}, retro monitors, side view room`,
-        width: 384,
-        height: 192,
+        description: `Retro 16-bit pixel art platformer level.
+
+Strict 2D side view.
+No perspective depth.
+No 3D rendering.
+
+Scene:
+Interior of a house representing the website "${host}".
+
+Theme of the room should match the website type:
+- hacker room
+- editorial newsroom
+- office workspace
+
+Layout rules:
+- LEFT SIDE: one large door (must be visible)
+- CENTER: platforms, desks, computers and objects arranged like a 2D platform game level
+- RIGHT SIDE: a clear stack of newspapers
+
+The website name "${host}" must appear somewhere in the room.
+
+Style:
+retro 16-bit pixel art
+classic platformer screenshot
+flat colors
+pixel graphics`,
+        width: 128,
+        height: 64,
         noBackground: false,
         signal: controller.signal,
       });

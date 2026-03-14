@@ -112,7 +112,6 @@ export default function App() {
           </p>
 
           <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
-            <div className="room-scene-grid" aria-hidden="true"></div>
             <div id="roomIndoorBackdrop" className="room-indoor-backdrop hidden" aria-hidden="true"></div>
             <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
               <div id="roomAvatar" className="room-avatar" aria-hidden="true">
@@ -132,20 +131,6 @@ export default function App() {
               </div>
 
               <p id="roomInteractionHint" className="room-interaction-hint hidden" aria-live="polite"></p>
-            </div>
-            <div className="room-scene-stool" aria-hidden="true">
-              <span className="seat"></span>
-              <span className="leg one"></span>
-              <span className="leg two"></span>
-              <span className="leg three"></span>
-            </div>
-            <div className="room-scene-desks" aria-hidden="true">
-              <div className="desk"></div>
-              <div className="desk"></div>
-              <div className="desk desk-with-papers">
-                <span className="paper p1"></span>
-                <span className="paper p2"></span>
-              </div>
             </div>
           </section>
 
