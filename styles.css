@@ -571,6 +571,16 @@ body {
   opacity: 0.8;
 }
 
+.nature-decor {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
 .roof {
   position: absolute;
   top: 8px;

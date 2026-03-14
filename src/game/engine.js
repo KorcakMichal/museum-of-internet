@@ -1354,6 +1354,7 @@ only retro pixel art`,
 
   function start() {
     renderGrass();
+    renderNatureDecor();
     updatePlayerRender(state, refs);
     updateRoomAvatarRender(false);
     renderPlaceholderHouses();
@@ -1375,10 +1376,53 @@ only retro pixel art`,
     refs.navigatorSearchForm.addEventListener("submit", onNavigatorSubmit);
   }
 
+  function renderNatureDecor() {
+    const worldWidth = 4000;
+    const worldHeight = 2500;
+    const decorCount = 80;
+    // Each entry: asset src, render size in px, spawn weight
+    const decorAssets = [
+      { src: "/assets/litter-leaf.png",    size: 14, weight: 4 },
+      { src: "/assets/nature-flower.png",  size: 20, weight: 3 },
+      { src: "/assets/nature-pebbles.png", size: 22, weight: 2 },
+      { src: "/assets/nature-rock.png",    size: 24, weight: 1 },
+    ];
+    const weightedPool = decorAssets.flatMap(({ src, size, weight }) =>
+      Array.from({ length: weight }, () => ({ src, size }))
+    );
+
+    for (let i = 0; i < decorCount; i++) {
+      const pick = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      const x = Math.random() * (worldWidth - pick.size);
+      const y = Math.random() * (worldHeight - pick.size);
+
+      const hRoad = { x: 0, y: 642, width: worldWidth, height: 116 };
+      const vRoad = { x: 1675 - 63, y: 150, width: 126, height: worldHeight - 150 };
+      const box = { x, y, width: pick.size, height: pick.size };
+      if (intersects(box, hRoad) || intersects(box, vRoad)) {
+        continue;
+      }
+
+      const el = document.createElement("img");
+      el.src = pick.src;
+      el.className = "nature-decor";
+      el.style.width = `${pick.size}px`;
+      el.style.height = `${pick.size}px`;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.zIndex = Math.floor(y);
+      const scale = 0.75 + Math.random() * 0.5;
+      const rot = Math.random() * 360;
+      el.style.transform = `rotate(${rot}deg) scale(${scale})`;
+      el.setAttribute("aria-hidden", "true");
+      refs.world.appendChild(el);
+    }
+  }
+
   function renderGrass() {
     const worldWidth = 4000;
     const worldHeight = 2500;
-    const grassCount = 150; // Increased from 60 to 150
+    const grassCount = 250;
 
     for (let i = 0; i < grassCount; i++) {
       const size = 160;
