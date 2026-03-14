@@ -3,6 +3,11 @@ resource "hcloud_ssh_key" "deployer" {
   public_key = var.ssh_public_key
 }
 
+locals {
+  use_ssl     = trimspace(var.domain_name) != "" && trimspace(var.letsencrypt_email) != ""
+  server_name = trimspace(var.domain_name) != "" ? trimspace(var.domain_name) : "_"
+}
+
 resource "hcloud_firewall" "web" {
   name = "${var.project_name}-fw"
 
@@ -59,6 +64,8 @@ resource "hcloud_server" "web" {
     package_upgrade: true
     packages:
       - nginx
+      - certbot
+      - python3-certbot-nginx
 
     write_files:
       - path: /etc/nginx/sites-available/default
@@ -67,6 +74,8 @@ resource "hcloud_server" "web" {
           server {
             listen 80 default_server;
             listen [::]:80 default_server;
+
+            server_name ${local.server_name};
 
             root ${var.app_dir};
             index index.html;
@@ -106,5 +115,10 @@ resource "hcloud_server" "web" {
       - nginx -t
       - systemctl enable nginx
       - systemctl restart nginx
+%{ if local.use_ssl ~}
+      - certbot --nginx --non-interactive --agree-tos --email ${trimspace(var.letsencrypt_email)} -d ${trimspace(var.domain_name)} --redirect || true
+      - systemctl enable certbot.timer || true
+      - systemctl start certbot.timer || true
+%{ endif ~}
   CLOUD_INIT
 }

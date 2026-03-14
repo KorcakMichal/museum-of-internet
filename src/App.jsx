@@ -22,6 +22,13 @@ const welcomeTranslations = {
     summonText: 'Use the browser house to add more sites to the map and let their interiors generate in the background.',
     summonImageAlt: 'Preview of summoning a new website house',
     mapAria: 'Town map overview',
+    worldAria: 'Town map',
+    playerAria: 'Player character',
+    grandmaNpcAria: 'DNS Grandma NPC',
+    miniMapAria: 'Overview map with houses and player position',
+    houseBrowserAria: 'House browser',
+    roomSceneAria: 'Room scene decoration',
+    roomWalkAreaAria: 'Walkable room area',
     mapTitle: 'Town Navigator',
     close: 'Close',
     summonMapLabel: 'Summon New House',
@@ -44,6 +51,17 @@ const welcomeTranslations = {
     grandmaDescription: 'Ask anything about moving around town, opening houses, and using map controls.',
     grandmaPlaceholder: 'Ask DNS Grandma what to do next...',
     send: 'Send',
+    openSettings: 'Open settings',
+    settingsTitle: 'Settings',
+    gameSettingsTitle: 'Game Settings',
+    audioLabel: 'Audio',
+    muteMusic: 'Mute Music',
+    unmuteMusic: 'Unmute Music',
+    backgroundMusicVolume: 'Background Music Volume',
+    backgroundMusicVolumeAria: 'Background music volume',
+    fullscreenEnter: 'Enter fullscreen',
+    fullscreenExit: 'Exit fullscreen',
+    mapToggleTitle: 'Toggle map',
   },
   cs: {
     welcomeAria: 'Uvítací stránka',
@@ -65,6 +83,13 @@ const welcomeTranslations = {
     summonText: 'Použij browser house pro přidání dalších webů na mapu a nech jejich interiéry vygenerovat na pozadí.',
     summonImageAlt: 'Náhled vyvolání nového webového domu',
     mapAria: 'Přehled mapy města',
+    worldAria: 'Mapa města',
+    playerAria: 'Postava hráče',
+    grandmaNpcAria: 'DNS Babička NPC',
+    miniMapAria: 'Přehled mapy s domy a pozicí hráče',
+    houseBrowserAria: 'Prohlížeč domů',
+    roomSceneAria: 'Dekorace místnosti',
+    roomWalkAreaAria: 'Průchozí část místnosti',
     mapTitle: 'Navigátor Města',
     close: 'Zavřít',
     summonMapLabel: 'Vyvolej Nový Dům',
@@ -87,6 +112,17 @@ const welcomeTranslations = {
     grandmaDescription: 'Ptej se na pohyb po městě, otevírání domů a ovládání mapy.',
     grandmaPlaceholder: 'Zeptej se DNS Babičky, co dělat dál...',
     send: 'Odeslat',
+    openSettings: 'Otevřít nastavení',
+    settingsTitle: 'Nastavení',
+    gameSettingsTitle: 'Nastavení hry',
+    audioLabel: 'Zvuk',
+    muteMusic: 'Vypnout hudbu',
+    unmuteMusic: 'Zapnout hudbu',
+    backgroundMusicVolume: 'Hlasitost hudby na pozadí',
+    backgroundMusicVolumeAria: 'Hlasitost hudby na pozadí',
+    fullscreenEnter: 'Zapnout celou obrazovku',
+    fullscreenExit: 'Vypnout celou obrazovku',
+    mapToggleTitle: 'Přepnout mapu',
   },
 };
 
@@ -413,7 +449,7 @@ export default function App() {
         <>
           <section className="game-layout">
             <div className="world-frame">
-              <div id="world" className="world" aria-label="Town map">
+              <div id="world" className="world" aria-label={welcomeText.worldAria}>
                 <div className="road road-horizontal"></div>
                 <div className="road road-vertical"></div>
                 <div className="square"></div>
@@ -421,12 +457,12 @@ export default function App() {
                 <div className="trees trees-top"></div>
                 <div className="trees trees-bottom"></div>
 
-                <div id="player" className="player" aria-label="Player character">
+                <div id="player" className="player" aria-label={welcomeText.playerAria}>
                   <div className="player-shadow"></div>
                   <div className="player-sprite"></div>
                 </div>
 
-                <div id="dnsGrandma" className="npc dns-grandma" aria-label="DNS Grandma NPC">
+                <div id="dnsGrandma" className="npc dns-grandma" aria-label={welcomeText.grandmaNpcAria}>
                   <div className="player-shadow"></div>
                   <div className="player-sprite"></div>
                 </div>
@@ -445,7 +481,7 @@ export default function App() {
                 </header>
 
                 <div className="map-overlay-content">
-                  <div id="miniMap" className="mini-map" role="img" aria-label="Overview map with houses and player position">
+                  <div id="miniMap" className="mini-map" role="img" aria-label={welcomeText.miniMapAria}>
                     <div id="mapHouseMarkers" className="map-house-markers"></div>
                     <div id="mapPlayerMarker" className="map-player-marker" aria-hidden="true"></div>
                   </div>
@@ -487,7 +523,7 @@ export default function App() {
                 </button>
               </div>
 
-              <section className="house-browser-panel" aria-label="House browser">
+              <section className="house-browser-panel" aria-label={welcomeText.houseBrowserAria}>
                 <p className="panel-label">{welcomeText.houseBrowser}</p>
                 <div id="houseBrowserList" className="house-browser-list"></div>
               </section>
@@ -512,9 +548,9 @@ export default function App() {
                 {welcomeText.webRoomDescription}
               </p>
 
-              <section id="roomScene" className="room-scene" aria-label="Room scene decoration">
+              <section id="roomScene" className="room-scene" aria-label={welcomeText.roomSceneAria}>
                 <div id="roomIndoorBackdrop" className="room-indoor-backdrop hidden" aria-hidden="true"></div>
-                <div id="roomWalkArea" className="room-walk-area" aria-label="Walkable room area">
+                <div id="roomWalkArea" className="room-walk-area" aria-label={welcomeText.roomWalkAreaAria}>
                   <div id="roomAvatar" className="room-avatar" aria-hidden="true">
                     <div className="player-shadow"></div>
                     <div className="player-sprite"></div>
@@ -646,8 +682,8 @@ export default function App() {
         className="button button-secondary settings-trigger"
         type="button"
         onClick={openSettings}
-        aria-label="Open settings"
-        title="Open settings"
+        aria-label={welcomeText.openSettings}
+        title={welcomeText.openSettings}
       >
         <span className="settings-icon" aria-hidden="true"></span>
       </button>
@@ -690,13 +726,13 @@ export default function App() {
               className="mobile-btn mobile-fullscreen-btn"
               type="button"
               onClick={toggleFullscreen}
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={isFullscreen ? welcomeText.fullscreenExit : welcomeText.fullscreenEnter}
             >{isFullscreen ? '⛶' : '⛶'}</button>
             <button
               className="mobile-btn mobile-map-btn"
               type="button"
               onPointerDown={() => gameApiRef.current?.triggerMap()}
-              title="Toggle map"
+              title={welcomeText.mapToggleTitle}
             >M</button>
             <button
               className="mobile-btn mobile-action-btn"
@@ -710,25 +746,25 @@ export default function App() {
       <section
         className={`settings-overlay panel ${isSettingsOpen ? '' : 'hidden'}`}
         aria-hidden={!isSettingsOpen}
-        aria-label="Settings"
+        aria-label={welcomeText.settingsTitle}
       >
         <header className="settings-overlay-header">
           <div>
-            <p className="panel-label">Settings</p>
-            <h3>Game Settings</h3>
+            <p className="panel-label">{welcomeText.settingsTitle}</p>
+            <h3>{welcomeText.gameSettingsTitle}</h3>
           </div>
           <button className="button button-secondary" type="button" onClick={closeSettings}>
-            Close
+            {welcomeText.close}
           </button>
         </header>
 
         <div className="settings-overlay-content">
-          <p className="panel-label">Audio</p>
+          <p className="panel-label">{welcomeText.audioLabel}</p>
           <button className="button button-secondary" type="button" onClick={toggleMusicMute}>
-            {musicMuted ? 'Unmute Music' : 'Mute Music'}
+            {musicMuted ? welcomeText.unmuteMusic : welcomeText.muteMusic}
           </button>
           <label className="music-volume" htmlFor="musicVolumeRange">
-            Background Music Volume {musicMuted ? 0 : musicVolume}%
+            {welcomeText.backgroundMusicVolume} {musicMuted ? 0 : musicVolume}%
           </label>
           <input
             id="musicVolumeRange"
@@ -738,7 +774,7 @@ export default function App() {
             step="1"
             value={musicVolume}
             onChange={handleVolumeChange}
-            aria-label="Background music volume"
+            aria-label={welcomeText.backgroundMusicVolumeAria}
           />
         </div>
       </section>

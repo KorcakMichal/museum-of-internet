@@ -38,3 +38,15 @@ variable "app_dir" {
   type        = string
   default     = "/var/www/museum-of-internet"
 }
+
+variable "domain_name" {
+  description = "Domain name for HTTPS (must point to server IP); leave empty to keep HTTP-only"
+  type        = string
+  default     = ""
+}
+
+variable "letsencrypt_email" {
+  description = "Email for Let's Encrypt registration (required when domain_name is set)"
+  type        = string
+  default     = ""
+}

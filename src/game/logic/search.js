@@ -8,14 +8,45 @@ import {
 } from '../utils';
 import { makeCard, makeLink, makeButton, clearElement } from '../ui/helpers';
 
-export async function runBrowserSearch(state, refs, query, { createHouseFromWebsiteUrl, setStatus, getActiveResultsContainer, setWebRoomResultsVisible, setDefaultWebRoomContent }) {
+function getSearchStrings(locale) {
+  if (locale === 'cs') {
+    return {
+      invalidWebsite: 'Tohle nevypada jako platna webova adresa.',
+      searching: (q) => `Hledam weby pro "${q}"...`,
+      noMatchesTitle: (q) => `Zadne prime shody webu pro "${q}"`,
+      noMatchesDescription: 'Zkus primou URL nebo konkretnejsi dotaz.',
+      noMatchesStatus: 'Nebyly nalezeny prime shody.',
+      possiblePagesTitle: (q) => `Mozne webove stranky pro "${q}"`,
+      possiblePagesDescription: 'Vyber vysledek webu a vyvolej z nej dum.',
+      openWebsite: 'Otevrit Web',
+      summonHouse: 'Vyvolat Dum',
+      foundPossibilities: (count) => `Nalezeno moznosti: ${count}.`,
+    };
+  }
+
+  return {
+    invalidWebsite: 'That does not look like a valid website address.',
+    searching: (q) => `Searching websites for "${q}"...`,
+    noMatchesTitle: (q) => `No direct website matches for "${q}"`,
+    noMatchesDescription: 'Try a direct URL or more specific query.',
+    noMatchesStatus: 'No direct matches found.',
+    possiblePagesTitle: (q) => `Possible webpages for "${q}"`,
+    possiblePagesDescription: 'Choose a website result and summon a house from it.',
+    openWebsite: 'Open Website',
+    summonHouse: 'Summon House',
+    foundPossibilities: (count) => `Found ${count} possibilities.`,
+  };
+}
+
+export async function runBrowserSearch(state, refs, query, { createHouseFromWebsiteUrl, setStatus, getActiveResultsContainer, setWebRoomResultsVisible, setDefaultWebRoomContent, locale = 'en' }) {
+  const t = getSearchStrings(locale);
   const resultsContainer = getActiveResultsContainer();
   clearElement(resultsContainer);
 
   if (looksLikeUrl(query)) {
     const creationResult = createHouseFromWebsiteUrl(query);
     if (!creationResult) {
-      setStatus('That does not look like a valid website address.');
+      setStatus(t.invalidWebsite);
       if (state.activeWebRoomHouse) {
         setDefaultWebRoomContent(state.activeWebRoomHouse);
       }
@@ -29,7 +60,7 @@ export async function runBrowserSearch(state, refs, query, { createHouseFromWebs
   }
 
   const encoded = encodeURIComponent(query);
-  setStatus(`Searching websites for "${query}"...`);
+  setStatus(t.searching(query));
 
   let apiResults = [];
   try {
@@ -46,17 +77,17 @@ export async function runBrowserSearch(state, refs, query, { createHouseFromWebs
   if (websiteCandidates.length === 0) {
     resultsContainer.appendChild(
       makeCard({
-        title: `No direct website matches for "${query}"`,
-        description: 'Try a direct URL or more specific query.',
+        title: t.noMatchesTitle(query),
+        description: t.noMatchesDescription,
         hero: true,
       }),
     );
-    setStatus('No direct matches found.');
+    setStatus(t.noMatchesStatus);
   } else {
     resultsContainer.appendChild(
       makeCard({
-        title: `Possible webpages for "${query}"`,
-        description: 'Choose a website result and summon a house from it.',
+        title: t.possiblePagesTitle(query),
+        description: t.possiblePagesDescription,
         hero: true,
       }),
     );
@@ -67,8 +98,8 @@ export async function runBrowserSearch(state, refs, query, { createHouseFromWebs
           title: candidate.host,
           description: candidate.description,
           actions: [
-            makeLink('Open Website', candidate.url, 'button-primary'),
-            makeButton('Summon House', () => {
+            makeLink(t.openWebsite, candidate.url, 'button-primary'),
+            makeButton(t.summonHouse, () => {
               createHouseFromWebsiteUrl(candidate.url);
             }),
           ],
@@ -76,7 +107,7 @@ export async function runBrowserSearch(state, refs, query, { createHouseFromWebs
       );
     });
 
-    setStatus(`Found ${websiteCandidates.length} possibilities.`);
+    setStatus(t.foundPossibilities(websiteCandidates.length));
   }
 
   setWebRoomResultsVisible(true);

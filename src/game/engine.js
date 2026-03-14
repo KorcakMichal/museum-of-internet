@@ -33,6 +33,41 @@ export function createGameEngine(refs, options = {}) {
         emptyFallback: "Not now. Ask again if you really need help.",
         answerFallback: "Walk up to a house and press E to enter. Open the map with M if you need direction.",
       };
+  const uiStrings = locale === "cs"
+    ? {
+        townSquare: "Namesti",
+        panelTownDescription: "Prijdi k domu a stiskni E. Kazda budova predstavuje skutecne misto na internetu.",
+        unknownWebsite: "neznamy web",
+        noSummary: "Shrnuti zatim neni k dispozici.",
+        websiteHouse: "Webovy Dum",
+        sourcePrefix: "Zdroj",
+        hintLeaveRoom: "Stiskni E pro opusteni mistnosti",
+        hintShowInfo: "Stiskni E pro zobrazeni informaci o webu",
+        hintInteract: "Stiskni E pro interakci",
+        hintMoveToZones: "Presun se vlevo pro odchod, nebo vpravo pro informace o webu.",
+        statusWalkClose: "Nejdriv se pribliz k levemu vychodu nebo pravym novinam.",
+        hintLoadingInfo: "Nacitam informace o webu...",
+        hintInfoShown: "Informace o webu jsou zobrazeny dole.",
+        hintFallbackInfo: "Pouzivam zalozni informace o webu.",
+        howHouseWorks: "Jak tento dum funguje",
+      }
+    : {
+        townSquare: "Town Square",
+        panelTownDescription: "Walk up to a house and press E. Each building represents a real place on the internet.",
+        unknownWebsite: "unknown website",
+        noSummary: "No summary available yet.",
+        websiteHouse: "Website House",
+        sourcePrefix: "Source",
+        hintLeaveRoom: "Press E to leave the room",
+        hintShowInfo: "Press E to view website info",
+        hintInteract: "Press E to interact",
+        hintMoveToZones: "Move to the left side to leave, or to the right side for website info.",
+        statusWalkClose: "Walk close to the left exit or right info papers first.",
+        hintLoadingInfo: "Loading website info...",
+        hintInfoShown: "Website info shown below.",
+        hintFallbackInfo: "Using fallback website info.",
+        howHouseWorks: "How this house works",
+      };
 
   const state = createGameState();
   const indoorBackdropCache = new Map();
@@ -228,9 +263,8 @@ export function createGameEngine(refs, options = {}) {
     state.selectedHouse = house;
 
     if (!house) {
-      refs.panelTitle.textContent = "Town Square";
-      refs.panelDescription.textContent =
-        "Walk up to a house and press E. Each building represents a real place on the internet.";
+      refs.panelTitle.textContent = uiStrings.townSquare;
+      refs.panelDescription.textContent = uiStrings.panelTownDescription;
       renderFacts(getDefaultPanelFacts());
       refs.enterRoomButton.classList.add("disabled");
       refs.visitLink.classList.add("disabled");
@@ -320,7 +354,7 @@ export function createGameEngine(refs, options = {}) {
       const id = `placeholder-${index}`;
       const placeholderHouse = {
         id,
-        name: "Vacant Lot",
+        name: locale === "cs" ? "Volny Pozemek" : "Vacant Lot",
         placeholder: true,
         asset: assetPath,
         lot,
@@ -358,25 +392,37 @@ export function createGameEngine(refs, options = {}) {
 
     const house = {
       id,
-      name: `${displayName} House`,
+      name: locale === "cs" ? `${displayName} Dum` : `${displayName} House`,
       url: website.url,
       interactionType: "website-shortcut",
       asset: assetPath,
       npcAsset: "/assets/npc/grandma/dnsgrandma.png",
-      npcText: "DNS Grandma: Hello dear! Are you lost in the World Wide Web? I can help you find your way.",
-      description: `A custom website house generated from ${website.host}.`,
+      npcText: locale === "cs"
+        ? "DNS Babicka: Ahoj. Ztratil ses na World Wide Webu? Ukazu ti cestu."
+        : "DNS Grandma: Hello dear! Are you lost in the World Wide Web? I can help you find your way.",
+      description: locale === "cs"
+        ? `Vlastni webovy dum vygenerovany z ${website.host}.`
+        : `A custom website house generated from ${website.host}.`,
       facts: [
-        `Generated from: ${website.host}`,
-        "Spawned automatically from the Browser House.",
-        "Use this as a quick shortcut in your town.",
+        locale === "cs" ? `Vygenerovano z: ${website.host}` : `Generated from: ${website.host}`,
+        locale === "cs" ? "Automaticky vytvoren z Browser House." : "Spawned automatically from the Browser House.",
+        locale === "cs" ? "Pouzij to jako rychlou zkratku po meste." : "Use this as a quick shortcut in your town.",
       ],
-      roomMode: "Website Shortcut Room",
+      roomMode: locale === "cs" ? "Mistnost Webove Zkratky" : "Website Shortcut Room",
       roomAddress: `museum://website-house/${website.host}`,
-      roomIntro: `This custom house was generated from your browser search and points directly to ${website.host}.`,
-      searchPlaceholder: "Type a URL or a search query",
-      townFact: `${displayName} House: custom website shortcut.`,
-      chips: [website.host, `about ${displayName}`, `${displayName} login`],
-      roomTip: "You can keep generating houses from Browser House by searching more websites.",
+      roomIntro: locale === "cs"
+        ? `Tento vlastni dum byl vygenerovan z tveho vyhledavani a vede primo na ${website.host}.`
+        : `This custom house was generated from your browser search and points directly to ${website.host}.`,
+      searchPlaceholder: locale === "cs" ? "Napis URL nebo vyhledavaci dotaz" : "Type a URL or a search query",
+      townFact: locale === "cs" ? `${displayName} Dum: vlastni webova zkratka.` : `${displayName} House: custom website shortcut.`,
+      chips: [
+        website.host,
+        locale === "cs" ? `o ${displayName}` : `about ${displayName}`,
+        locale === "cs" ? `${displayName} prihlaseni` : `${displayName} login`,
+      ],
+      roomTip: locale === "cs"
+        ? "Dalsi domy muzes dale generovat v Browser House vyhledanim dalsich webu."
+        : "You can keep generating houses from Browser House by searching more websites.",
       lot,
       collision: {
         x: lot.x + 20,
@@ -404,14 +450,16 @@ export function createGameEngine(refs, options = {}) {
   function createHouseFromWebsiteUrl(url) {
     const website = normalizeWebsiteInput(url);
     if (!website) {
-      setStatus("Could not parse that website address.");
+      setStatus(locale === "cs" ? "Tu webovou adresu se nepodarilo precist." : "Could not parse that website address.");
       return null;
     }
 
     const houseResult = createWebsiteHouse(website);
     if (houseResult.status === "created") {
       setPanelContent(houseResult.house);
-      setStatus(`Generated ${houseResult.house.name} from ${website.host}.`);
+      setStatus(locale === "cs"
+        ? `Vygenerovan ${houseResult.house.name} z ${website.host}.`
+        : `Generated ${houseResult.house.name} from ${website.host}.`);
       logIndoorFlow("Pre-generating indoor after house creation", {
         houseId: houseResult.house.id,
         host: website.host,
@@ -424,9 +472,13 @@ export function createGameEngine(refs, options = {}) {
       });
     } else if (houseResult.status === "exists") {
       setPanelContent(houseResult.house);
-      setStatus(`${houseResult.house.name} already exists in town.`);
+      setStatus(locale === "cs"
+        ? `${houseResult.house.name} uz ve meste existuje.`
+        : `${houseResult.house.name} already exists in town.`);
     } else {
-      setStatus("All custom lot slots are used. Open one of the existing houses instead.");
+      setStatus(locale === "cs"
+        ? "Vsechny sloty pro vlastni domy jsou obsazene. Otevri nektery z existujicich domu."
+        : "All custom lot slots are used. Open one of the existing houses instead.");
     }
 
     return { website, houseResult };
@@ -442,11 +494,11 @@ export function createGameEngine(refs, options = {}) {
     }
 
     const labels = {
-      npc: "Press E to leave the room",
-      newspapers: "Press E to view website info",
+      npc: uiStrings.hintLeaveRoom,
+      newspapers: uiStrings.hintShowInfo,
     };
 
-    refs.roomInteractionHint.textContent = labels[target] || "Press E to interact";
+    refs.roomInteractionHint.textContent = labels[target] || uiStrings.hintInteract;
     refs.roomInteractionHint.classList.remove("hidden");
   }
 
@@ -521,10 +573,10 @@ export function createGameEngine(refs, options = {}) {
   }
 
   function formatHouseInfoText(house, info) {
-    const host = getSiteHost(house?.url) || house?.url || "unknown website";
-    const summary = (info?.summary || house?.description || "No summary available yet.").trim();
-    const source = info?.source ? `Source: ${info.source}.` : "";
-    const title = info?.title || house?.name || "Website House";
+    const host = getSiteHost(house?.url) || house?.url || uiStrings.unknownWebsite;
+    const summary = (info?.summary || house?.description || uiStrings.noSummary).trim();
+    const source = info?.source ? `${uiStrings.sourcePrefix}: ${info.source}.` : "";
+    const title = info?.title || house?.name || uiStrings.websiteHouse;
     return `${title} (${host}). ${summary}${source ? ` ${source}` : ""}`;
   }
 
@@ -551,10 +603,10 @@ export function createGameEngine(refs, options = {}) {
   async function interactWithRoomObject() {
     if (!state.nearbyRoomObject || !state.activeWebRoomHouse) {
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = "Move to the left side to leave, or to the right side for website info.";
+        refs.roomInteractionHint.textContent = uiStrings.hintMoveToZones;
         refs.roomInteractionHint.classList.remove("hidden");
       } else {
-        setStatus("Walk close to the left exit or right info papers first.");
+        setStatus(uiStrings.statusWalkClose);
       }
       return;
     }
@@ -568,7 +620,7 @@ export function createGameEngine(refs, options = {}) {
 
     const house = state.activeWebRoomHouse;
     if (isCustomIndoorRoomOpen()) {
-      refs.roomInteractionHint.textContent = "Loading website info...";
+      refs.roomInteractionHint.textContent = uiStrings.hintLoadingInfo;
       refs.roomInteractionHint.classList.remove("hidden");
     }
 
@@ -577,7 +629,7 @@ export function createGameEngine(refs, options = {}) {
       const details = formatHouseInfoText(house, info);
       setStatus(details);
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = "Website info shown below.";
+        refs.roomInteractionHint.textContent = uiStrings.hintInfoShown;
         refs.roomInteractionHint.classList.remove("hidden");
       }
     } catch (error) {
@@ -588,7 +640,7 @@ export function createGameEngine(refs, options = {}) {
       const fallback = formatHouseInfoText(house, null);
       setStatus(fallback);
       if (isCustomIndoorRoomOpen()) {
-        refs.roomInteractionHint.textContent = "Using fallback website info.";
+        refs.roomInteractionHint.textContent = uiStrings.hintFallbackInfo;
         refs.roomInteractionHint.classList.remove("hidden");
       }
     }
@@ -661,7 +713,7 @@ export function createGameEngine(refs, options = {}) {
     if (house.roomTip) {
       refs.webRoomResults.appendChild(
         makeCard({
-          title: "How this house works",
+          title: uiStrings.howHouseWorks,
           description: house.roomTip,
         }),
       );
@@ -751,7 +803,7 @@ export function createGameEngine(refs, options = {}) {
       if (activeIndoorRequestHouseId === house.id && activeIndoorRequestPromise) {
         logIndoorFlow("Generation already in progress; reusing request", { houseId: house.id });
         if (!silent && state.activeWebRoomHouse?.id === house.id) {
-          setStatus("Indoor generation already in progress...");
+          setStatus(locale === "cs" ? "Generovani interieru uz probiha..." : "Indoor generation already in progress...");
         }
         await activeIndoorRequestPromise;
 
@@ -759,7 +811,9 @@ export function createGameEngine(refs, options = {}) {
         if (completedImage && state.activeWebRoomHouse?.id === house.id) {
           setGeneratedIndoorBackdrop(completedImage);
           if (!silent) {
-            setStatus("Indoor generated. Move around and press E near objects.");
+            setStatus(locale === "cs"
+              ? "Interier vygenerovan. Pohybuj se a stiskni E u objektu."
+              : "Indoor generated. Move around and press E near objects.");
           }
         }
         return;
@@ -788,7 +842,7 @@ export function createGameEngine(refs, options = {}) {
       if (!idea) {
         logIndoorFlow("Requesting room idea", { houseId: house.id, host });
         if (!silent) {
-          setStatus(`Generating room idea for ${host}...`);
+          setStatus(locale === "cs" ? `Generuji napad na mistnost pro ${host}...` : `Generating room idea for ${host}...`);
         }
         const ideaResult = await generateIdeas({
           host,
@@ -838,7 +892,7 @@ export function createGameEngine(refs, options = {}) {
       }
 
       if (!silent) {
-        setStatus(`Generating pixel art indoor for ${host}...`);
+        setStatus(locale === "cs" ? `Generuji pixel art interier pro ${host}...` : `Generating pixel art indoor for ${host}...`);
       }
       logIndoorFlow("Requesting PixelLab image", {
         houseId: house.id,
@@ -921,7 +975,9 @@ only retro pixel art`,
       if (state.activeWebRoomHouse?.id === house.id) {
         setGeneratedIndoorBackdrop(imageSource);
         if (!silent) {
-          setStatus("Indoor generated. Move around and press E near objects.");
+          setStatus(locale === "cs"
+            ? "Interier vygenerovan. Pohybuj se a stiskni E u objektu."
+            : "Indoor generated. Move around and press E near objects.");
         }
         logIndoorFlow("Generation completed and applied", { houseId: house.id, host });
       }
@@ -936,8 +992,10 @@ only retro pixel art`,
       if (state.activeWebRoomHouse?.id === house.id) {
         clearGeneratedIndoorBackdrop();
         if (!silent) {
-          const message = error instanceof Error ? error.message : "Unknown PixelLab error.";
-          setStatus(`Could not generate indoor image: ${message}`);
+          const message = error instanceof Error ? error.message : (locale === "cs" ? "Neznama chyba PixelLab." : "Unknown PixelLab error.");
+          setStatus(locale === "cs"
+            ? `Nepodarilo se vygenerovat obrazek interieru: ${message}`
+            : `Could not generate indoor image: ${message}`);
         }
       }
     } finally {
@@ -966,7 +1024,7 @@ only retro pixel art`,
     state.activeWebRoomHouse = house;
     state.keys.clear();
     setPanelContent(house);
-    refs.webRoomLabel.textContent = house.roomMode || "Inside Website House";
+    refs.webRoomLabel.textContent = house.roomMode || (locale === "cs" ? "Uvnitr Weboveho Domu" : "Inside Website House");
     refs.webRoomTitle.textContent = house.name;
     refs.webRoomDescription.textContent = house.roomIntro;
 
@@ -994,14 +1052,14 @@ only retro pixel art`,
     if (useIndoorScene) {
       resetRoomAvatar();
       clearGeneratedIndoorBackdrop();
-      setStatus("Preparing indoor scene...");
+      setStatus(locale === "cs" ? "Pripravuji interierovou scenu..." : "Preparing indoor scene...");
       generateIndoorForHouse(house);
     } else {
       state.roomKeys.clear();
       state.nearbyRoomObject = null;
       setRoomInteractionHint(null);
       clearGeneratedIndoorBackdrop();
-      setStatus("Navigator room active. Use search below.");
+      setStatus(locale === "cs" ? "Mistnost navigatoru je aktivni. Pouzij vyhledavani dole." : "Navigator room active. Use search below.");
     }
 
     setDefaultWebRoomContent(house);
@@ -1056,20 +1114,20 @@ only retro pixel art`,
       const actions = document.createElement("div");
       actions.className = "house-browser-actions";
 
-      const focusButton = makeButton("Focus", () => {
+      const focusButton = makeButton(locale === "cs" ? "Zamerit" : "Focus", () => {
         setPanelContent(house);
         setMapOpen(state, refs, false);
       });
 
       const enterButton = makeButton(
-        "Open",
+        locale === "cs" ? "Otevrit" : "Open",
         () => {
           openWebRoom(house);
         },
         "button-primary",
       );
 
-      const visitButton = makeLink("Visit", house.url);
+      const visitButton = makeLink(locale === "cs" ? "Navstivit" : "Visit", house.url);
 
       actions.appendChild(focusButton);
       actions.appendChild(enterButton);
@@ -1103,7 +1161,7 @@ only retro pixel art`,
     if (intersects(playerBox, interactGrandmaZone)) {
       state.nearbyHouse = null;
       state.isNearbyGrandma = true;
-      refs.promptElement.textContent = "Press E to talk to DNS Grandma";
+      refs.promptElement.textContent = locale === "cs" ? "Stiskni E pro rozhovor s DNS Babickou" : "Press E to talk to DNS Grandma";
       refs.promptElement.classList.remove("hidden");
       updateHouseBrowserState();
       return;
@@ -1118,7 +1176,9 @@ only retro pixel art`,
     });
 
     if (state.nearbyHouse) {
-      refs.promptElement.textContent = `Press E to enter ${state.nearbyHouse.name}`;
+      refs.promptElement.textContent = locale === "cs"
+        ? `Stiskni E pro vstup do ${state.nearbyHouse.name}`
+        : `Press E to enter ${state.nearbyHouse.name}`;
       refs.promptElement.classList.remove("hidden");
     } else {
       refs.promptElement.classList.add("hidden");
@@ -1262,7 +1322,7 @@ only retro pixel art`,
 
   async function handleWebRoomSearch(query) {
     if (!query.trim()) {
-      setStatus("Type something first.");
+      setStatus(locale === "cs" ? "Nejdriv neco napis." : "Type something first.");
       if (state.activeWebRoomHouse) {
         setDefaultWebRoomContent(state.activeWebRoomHouse);
       }
@@ -1277,12 +1337,15 @@ only retro pixel art`,
         setStatus,
         getActiveResultsContainer,
         setWebRoomResultsVisible,
-        setDefaultWebRoomContent
+        setDefaultWebRoomContent,
+        locale,
       };
 
       await runBrowserSearch(state, refs, trimmedQuery, searchContext);
     } catch {
-      setStatus("That interaction failed. The external site links are still available.");
+      setStatus(locale === "cs"
+        ? "Tato akce se nepodarila. Odkazy na externi weby jsou stale dostupne."
+        : "That interaction failed. The external site links are still available.");
       if (state.activeWebRoomHouse) {
         setDefaultWebRoomContent(state.activeWebRoomHouse);
       }

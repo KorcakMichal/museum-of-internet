@@ -17,3 +17,13 @@ output "open_website" {
   description = "HTTP URL of your server"
   value       = "http://${hcloud_server.web.ipv4_address}"
 }
+
+output "open_website_https" {
+  description = "HTTPS URL when domain_name is configured"
+  value       = trimspace(var.domain_name) != "" ? "https://${trimspace(var.domain_name)}" : null
+}
+
+output "ssl_setup_note" {
+  description = "SSL setup status reminder"
+  value       = trimspace(var.domain_name) != "" && trimspace(var.letsencrypt_email) != "" ? "SSL setup enabled via certbot. Ensure DNS A record for ${trimspace(var.domain_name)} points to ${hcloud_server.web.ipv4_address}." : "SSL not enabled. Set domain_name and letsencrypt_email in terraform.tfvars to provision Let's Encrypt certificate."
+}
