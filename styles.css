@@ -82,19 +82,76 @@ body {
   background: var(--grass-dark); /* Background color for when camera goes out of bounds */
 }
 
-.music-dock {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  z-index: 2000;
-  width: min(340px, calc(100vw - 24px));
-  padding: 12px;
-  border-radius: 14px;
+.settings-trigger {
+  position: fixed !important;
+  top: max(8px, env(safe-area-inset-top));
+  right: 0;
+  left: auto !important;
+  z-index: 3000;
+  width: 52px !important;
+  min-width: 52px;
+  max-width: 52px;
+  height: 52px;
+  padding: 0 !important;
+  margin: 0;
+  border-radius: 12px;
+  flex: 0 0 52px;
 }
 
-.music-dock-controls {
+.settings-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+  background-image: url('/assets/settings-icon.png');
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.settings-trigger:hover .settings-icon {
+  transform: rotate(12deg);
+}
+
+.settings-trigger:active .settings-icon {
+  transform: scale(0.94) rotate(12deg);
+}
+
+.settings-trigger .settings-icon {
+  transition: transform 120ms ease;
+}
+
+.settings-overlay {
+  position: fixed;
+  right: 0;
+  top: 56px;
+  z-index: 2999;
+  width: min(380px, calc(100vw - 12px));
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(255, 250, 241, 0.98);
+  border: 1px solid rgba(31, 36, 48, 0.15);
+  box-shadow: 0 24px 60px rgba(11, 14, 20, 0.28);
+}
+
+.settings-overlay-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.settings-overlay-header h3 {
+  margin: 0;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 1.2rem;
+}
+
+.settings-overlay-content {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .music-volume {
@@ -102,15 +159,25 @@ body {
   color: var(--muted);
 }
 
-.music-dock input[type="range"] {
+.settings-overlay input[type="range"] {
   width: 100%;
 }
 
 @media (max-width: 740px) {
-  .music-dock {
-    right: 10px;
-    left: 10px;
-    bottom: 10px;
+  .settings-trigger {
+    top: max(6px, env(safe-area-inset-top));
+    right: 0;
+    left: auto !important;
+    width: 52px !important;
+    min-width: 52px;
+    max-width: 52px;
+    padding: 0 !important;
+  }
+
+  .settings-overlay {
+    right: 0;
+    left: auto;
+    top: 52px;
     width: auto;
   }
 }

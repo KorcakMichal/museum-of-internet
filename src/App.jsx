@@ -7,6 +7,7 @@ export default function App() {
   const musicVolumeRef = useRef(35);
   const [musicMuted, setMusicMuted] = useState(false);
   const [musicVolume, setMusicVolume] = useState(35);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -19,6 +20,23 @@ export default function App() {
     audio.muted = musicMuted;
     audio.volume = Math.max(0, Math.min(1, musicVolume / 100));
   }, [musicMuted, musicVolume]);
+
+  useEffect(() => {
+    if (!isSettingsOpen) {
+      return;
+    }
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isSettingsOpen]);
 
   useEffect(() => {
     const cleanup = initMuseumGame();
@@ -193,14 +211,6 @@ export default function App() {
     window.addEventListener('keydown', startMusicOnInteraction, { once: true });
     window.addEventListener('touchstart', startMusicOnInteraction, { once: true });
 
-    const handleMusicHotkey = (event) => {
-      if ((event.key || '').toLowerCase() === 'm') {
-        setMusicMuted((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleMusicHotkey);
-
     return () => {
       disposed = true;
       stopFade();
@@ -208,7 +218,6 @@ export default function App() {
       window.removeEventListener('pointerdown', startMusicOnInteraction);
       window.removeEventListener('keydown', startMusicOnInteraction);
       window.removeEventListener('touchstart', startMusicOnInteraction);
-      window.removeEventListener('keydown', handleMusicHotkey);
       backgroundMusic.pause();
       backgroundMusic.currentTime = 0;
       if (audioRef.current === backgroundMusic) {
@@ -224,6 +233,14 @@ export default function App() {
 
   const toggleMusicMute = () => {
     setMusicMuted((prev) => !prev);
+  };
+
+  const openSettings = () => {
+    setIsSettingsOpen(true);
+  };
+
+  const closeSettings = () => {
+    setIsSettingsOpen(false);
   };
 
   return (
@@ -288,27 +305,6 @@ export default function App() {
             </div>
           </section>
 
-          <section className="music-dock panel" aria-label="Music controls">
-            <p className="panel-label">Music</p>
-            <div className="music-dock-controls">
-              <button className="button button-secondary" type="button" onClick={toggleMusicMute}>
-                {musicMuted ? 'Unmute (M)' : 'Mute (M)'}
-              </button>
-              <label className="music-volume" htmlFor="musicVolumeRange">
-                Volume {musicMuted ? 0 : musicVolume}%
-              </label>
-              <input
-                id="musicVolumeRange"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={musicVolume}
-                onChange={handleVolumeChange}
-                aria-label="Background music volume"
-              />
-            </div>
-          </section>
         </div>
 
         <aside className="panel" id="infoPanel">
@@ -336,6 +332,52 @@ export default function App() {
             <li>Browser House: a general web navigator room.</li>
           </ul>
         </aside>
+      </section>
+
+      <button
+        className="button button-secondary settings-trigger"
+        type="button"
+        onClick={openSettings}
+        aria-label="Open settings"
+        title="Open settings"
+      >
+        <span className="settings-icon" aria-hidden="true"></span>
+      </button>
+
+      <section
+        className={`settings-overlay panel ${isSettingsOpen ? '' : 'hidden'}`}
+        aria-hidden={!isSettingsOpen}
+        aria-label="Settings"
+      >
+        <header className="settings-overlay-header">
+          <div>
+            <p className="panel-label">Settings</p>
+            <h3>Game Settings</h3>
+          </div>
+          <button className="button button-secondary" type="button" onClick={closeSettings}>
+            Close
+          </button>
+        </header>
+
+        <div className="settings-overlay-content">
+          <p className="panel-label">Audio</p>
+          <button className="button button-secondary" type="button" onClick={toggleMusicMute}>
+            {musicMuted ? 'Unmute Music' : 'Mute Music'}
+          </button>
+          <label className="music-volume" htmlFor="musicVolumeRange">
+            Background Music Volume {musicMuted ? 0 : musicVolume}%
+          </label>
+          <input
+            id="musicVolumeRange"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={musicVolume}
+            onChange={handleVolumeChange}
+            aria-label="Background music volume"
+          />
+        </div>
       </section>
 
       <div id="webRoom" className="web-room hidden" aria-hidden="true">
