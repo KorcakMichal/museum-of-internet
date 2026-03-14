@@ -1,0 +1,6 @@
+hcloud_token   = "replace-with-hcloud-token"
+project_name   = "museum-of-internet"
+location       = "fsn1"
+server_type    = "cx22"
+image          = "ubuntu-24.04"
+ssh_public_key = "ssh-ed25519 AAAA... your_key_comment"

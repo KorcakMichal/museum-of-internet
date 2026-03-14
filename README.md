@@ -81,3 +81,8 @@ This sends a POST request equivalent to:
 - Add interior scenes for each website.
 - Replace CSS characters with sprite art from `design/exmaples/`.
 - Add dialog, quests, and collectible internet artifacts.
+
+```
+npm run build
+scp -i ~/.ssh/museum-of-internet-key -r dist/* root@188.245.169.191:/var/www/museum-of-internet/
+```
